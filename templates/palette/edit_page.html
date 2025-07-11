@@ -1,0 +1,83 @@
+{% extends "deux/base.html" %}
+{% load static %}
+
+{% block content %}
+<h1>Edit Page: {{ page.title }}</h1>
+
+<form method="post" id="layoutForm">
+  {% csrf_token %}
+  <textarea name="layout_json" id="layoutJson" style="width: 100%; height: 200px;">{{ page.layout_json }}</textarea>
+  <br>
+  <button type="submit">Save</button>
+</form>
+
+<h3>Available Components</h3>
+<ul id="componentsList">
+  {% for component in components %}
+    <li draggable="true" ondragstart="drag(event)" data-name="{{ component.name }}" data-default='{{ component.default_props|escapejs }}'>
+      {{ component.display_name }}
+    </li>
+  {% endfor %}
+</ul>
+
+<hr>
+<h2>Live Preview</h2>
+<div id="preview"></div>
+
+<script>
+let draggedComponent = null;
+
+function drag(ev) {
+    draggedComponent = {
+        name: ev.target.dataset.name,
+        props: JSON.parse(ev.target.dataset.default)
+    };
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    const textarea = document.getElementById("layoutJson");
+    let layout = [];
+    try {
+        layout = JSON.parse(textarea.value || "[]");
+    } catch (e) {
+        layout = [];
+    }
+    if (draggedComponent) {
+        layout.push(draggedComponent);
+        textarea.value = JSON.stringify(layout, null, 2);
+        updatePreview();
+    }
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function renderComponent(name, props) {
+    const container = document.createElement("div");
+    const p = document.createElement("pre");
+    p.innerText = "Component: " + name + "\nProps: " + JSON.stringify(props);
+    container.appendChild(p);
+    return container;
+}
+
+function updatePreview() {
+    const preview = document.getElementById("preview");
+    preview.innerHTML = "";
+    try {
+        const layout = JSON.parse(document.getElementById("layoutJson").value);
+        layout.forEach(component => {
+            preview.appendChild(renderComponent(component.name, component.props));
+        });
+    } catch (e) {
+        preview.innerHTML = "<p style='color:red;'>Invalid JSON</p>";
+    }
+}
+
+document.getElementById("layoutJson").addEventListener("input", updatePreview);
+document.getElementById("preview").addEventListener("dragover", allowDrop);
+document.getElementById("preview").addEventListener("drop", drop);
+updatePreview();
+</script>
+{% endblock %}

@@ -1,0 +1,8 @@
+<div class="card" onclick="{{ props.onclick|default:"" }}">
+  <div class="card-header">
+    {{ props.title|default:"Card Title" }}
+  </div>
+  <div class="card-body">
+    {{ props.content|default:"No content provided." }}
+  </div>
+</div>

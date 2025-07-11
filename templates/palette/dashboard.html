@@ -1,0 +1,8 @@
+{% extends "palette/base.html" %}
+{% load palette %}
+
+{% block content %}
+  <h1>Custom Dashboard</h1>
+
+  {{ card_component|custom_admin_render:"title:Dashboard Card;content:Welcome to the custom admin!;onclick:alert('Clicked')" }}
+{% endblock %}
