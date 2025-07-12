@@ -1,5 +1,5 @@
 
-````md
+
 # 🎨 django-palette
 
 Build beautiful, dynamic Django admin pages using drag-and-drop components.
