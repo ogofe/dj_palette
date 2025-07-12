@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %} {{ title }} {% endblock title %}
+{% block page_title %}  User Management {% endblock page_title %}
+
+{% block content %}
+
+{% with users_list=cl %}
+{% with users=users_list.result_list %}
+
+    <div class="alert alert-info rounded-0 mb-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5> <strong>Users:</strong> {{ users|length }}</h5>
+
+            <a href="{% url 'admin:auth_user_add' %}" class="btn btn-block btn-small rounded-0">
+                <i class="bi bi-plus-circle"></i> Add User
+            </a>
+        </div>
+    </div>
+
+    <div class="p-3">
+        <div class="mb-2 d-flex justify-content-between rounded border align-items-end p-3 bg-light">
+            <div class="flex-grow-1">
+                <small class="text-muted">Search for users by username, email, or full name.</small>
+                <form method="get" action="{% url 'admin:auth_user_changelist' %}" class="form-inline d-flex input-group">
+                    <input type="text" name="q" placeholder="Search Users" class="form-control" value="{{ cl.query_string }}">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+
+            <div class="d-flex w-25 justify-content-between align-items-center">
+                <form method="get" action="{% url 'admin:auth_user_changelist' %}" class="w-100 form-inline">
+                    <button type="button" class="btn btn-primary ms-2 w-100 text-left"><i class="bi bi-filter"></i> Filter</button>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+        {% for user in users %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="card-text">
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        <strong>Last Login:</strong> {{ user.last_login|date:"Y-m-d H:i" }}<br>
+                        <strong>Is Active:</strong> {{ user.is_active|yesno:"Yes,No" }}<br>
+                        <strong>Is Staff:</strong> {{ user.is_staff|yesno:"Yes,No" }}<br>
+                        <strong>Is Superuser:</strong> {{ user.is_superuser|yesno:"Yes,No" }}<br>
+                    </p>
+                    <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-primary">Edit User</a>
+                    <form method="post" action="{% url 'admin:auth_user_delete' user.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+{% endwith %}
+
+{% endwith %}
+
+{% endblock content %}

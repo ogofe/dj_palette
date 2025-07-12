@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Log in{% endblock %}
+
+{% block extrastyle %}
+  <style>
+    body {
+      background-color: #f0f2f5;
+    }
+    .login-container {
+      max-width: 420px;
+      margin: 4rem auto;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    }
+    .form-control:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .brand-header {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #0d6efd;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+<div class="login-container">
+  <div class="brand-header">Palette Admin Login</div>
+
+  {% if form.errors %}
+    <div class="alert alert-danger" role="alert">
+      {% trans form.errors.first.error %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ form_url }}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_username" class="form-label">{% trans 'Username' %}</label>
+      <input type="text" name="username" autofocus required class="form-control" id="id_username">
+    </div>
+    <div class="mb-3">
+      <label for="id_password" class="form-label">{% trans 'Password' %}</label>
+      <input type="password" name="password" required class="form-control" id="id_password">
+    </div>
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit" class="btn btn-primary w-100">{% trans 'Log in' %}</button>
+  </form>
+
+  <p class="text-muted mt-3 text-center" style="font-size: 0.9rem;">
+    {% trans "Forgot your password?" %} <a href="{% url 'admin:password_change' %}">{% trans "Reset it here." %}</a>
+  </p>
+</div>
+{% endblock body %}

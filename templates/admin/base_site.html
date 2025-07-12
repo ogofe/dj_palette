@@ -1,0 +1,138 @@
+{% extends "admin/base.html" %}
+{% load i18n static palette %}
+{% block extrastyle %}
+<style>
+  body {
+    font-size: 0.95rem;
+    background-color: #f8f9fa;
+  }
+  .sidebar {
+    width: 240px;
+    min-width: 60px;
+    transition: width 0.3s;
+    background-color: #ffffff;
+    border-right: 1px solid #dee2e6;
+    height: 100vh;
+    overflow-x: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1030;
+  }
+  .sidebar:hover {
+    {% comment %} width: 240px; {% endcomment %}
+  }
+  .sidebar .nav-link {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .main-content {
+    width: calc(100% - 240px);
+    margin-left: 240px;
+  }
+
+  .topbar {
+    height: 60px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+  }
+  .account-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  .account-chip img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 0;
+    }
+    .sidebar:hover {
+      width: 200px;
+    }
+    .sidebar ~ .main-content {
+      margin-left: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex">
+  <div class="sidebar">
+    <h5 class="text-center mb-4 py-4"><i class="bi bi-grid-3x3-gap-fill"></i> Palette </h5>
+
+    <div class="nav flex-column mb-3 p-2">
+      <a href="{% url 'admin:index' %}" class="nav-link {% if request.path == '/admin/' %}active{% endif %}">
+        <i class="bi bi-house-door-fill me-2"></i> Dashboard
+      </a>
+    </div>
+
+    {% with app_list=available_apps %}
+      {% for app in app_list %}
+        <div>
+            <p class="small fw-bold bg-secondary text-white p-2 m-0">{{ app.name }}</p>
+            <div class="nav flex-column mb-2 p-2 gap-3">
+            {% for model in app.models %}
+                <div class="nav-item px-2 bg-light rounded-0 d-flex align-items-center justify-content-between">
+                    <a href="{{ model.admin_url }}" class="nav-link d-flex justify-content-between align-items-center {% if model.admin_url in request.path %}active{% endif %}">
+                    <span><i class="bi bi-file-text me-2"></i>{{ model.name }}</span>
+                    {% if model.add_url %}
+                        <a href="{{ model.add_url }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i>  Add</a>
+                    {% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <div class="main-content flex-grow-1">
+    {% block topbar %}
+    <div class="topbar">
+      <div class="d-flex align-items-center">
+      {% if request.path != '/admin/' %}
+        <a href="{% back_button %}" class="btn btn-small btn-outline-secondary me-3" title="Back">
+          <i class="bi bi-arrow-left"></i> Back
+        </a>
+      {% endif %}
+
+        <h5 class="mb-0">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</h5>
+      </div>
+      <div class="dropdown">
+        <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}" alt="User">
+          <span>{{ user.get_short_name|default:user.username }}</span>
+        </div>
+        <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
+          {% csrf_token %}
+        </form>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'admin:password_change' %}"><i class="bi bi-key"></i> Change Password</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin:user-profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button type="submit" form="logout" class="dropdown-item" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+    {% endblock topbar %}
+
+    {% block content %}
+    {% endblock content %}
+  </div>
+</div>
+{% endblock body %}

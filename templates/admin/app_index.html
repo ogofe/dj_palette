@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% load i18n palette %}
+
+{% block content %}
+  <div class="container py-4">
+    <h1 class="mb-4">{{ title }}</h1>
+    <div class="row dashboard-cards mx-0 gap-3 mb-4 p-0">
+      {% for model in app_list.0.models %}
+      <div class="col-md-4 mb-4 p-0">
+        {% palette_ui "palette/components/card.html" with title="{{ model.name }}" content="{{ model.objects.count }}" onclick="alert('Total Users')" %}
+          {{ palette_ui.super }}
+          <div class="card-footer d-flex justify-content-between py-3">
+            <a href="{{ model.admin_url }}" class="btn btn-sm btn-primary w-100 btn-block mb-3">
+              Manage {{ model.name }}
+            </a>
+          </div>
+        {% endpalette_ui %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

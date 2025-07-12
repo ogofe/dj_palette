@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load tz palette %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <div class="p-3">
+    <h2>Good {{ greeting }}, {{ user.get_full_name|default:user.username|title }}</h2>
+    <p class="text-muted">Welcome to your admin dashboard.</p>
+  </div>
+
+  <div class="row dashboard-cards mx-0 mb-4">
+    <div class="col-md-4">
+      {% palette_ui "palette/components/card.html" with title="Total Users" content=stats.total_users onclick="alert('Total Users')" %}
+        {{ palette_ui.super }}
+      {% endpalette_ui %}
+    </div>
+
+    <div class="col-md-4">
+      {% palette_ui "palette/components/card.html" with title="Staff Users" content=stats.total_users onclick="alert('Total Users')" %}
+      {{ palette_ui.super }}
+      {% endpalette_ui %}
+    </div>
+
+    <div class="col-md-4">
+      {% palette_ui "palette/components/card.html" with title="Active Users" content=stats.total_users onclick="alert('Total Users')" %}
+      {{ palette_ui.super }}
+      {% endpalette_ui %}
+    </div>
+  </div>
+{% endblock content %}

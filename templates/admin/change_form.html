@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static palette %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="mb-4">
+    <h2 class="mb-1">{{ title }}</h2>
+    {% if change %}<p class="text-muted">Editing: {{ original }}</p>{% endif %}
+  </div>
+
+  <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+    {% csrf_token %}
+
+    {% if is_popup %}
+      <input type="hidden" name="_popup" value="1">
+    {% endif %}
+    {% if to_field %}
+      <input type="hidden" name="_to_field" value="{{ to_field }}">
+    {% endif %}
+
+    <div class="row">
+      <div class="col-lg-9">
+        {% for fieldset in adminform %}
+          <fieldset class="mb-4 border rounded p-3 bg-white">
+            {% if fieldset.name %}
+              <legend class="h5 border-bottom pb-2 mb-3">{{ fieldset.label }}</legend>
+            {% endif %}
+            {% if fieldset.description %}
+              <p class="text-muted">{{ fieldset.description|safe }}</p>
+            {% endif %}
+
+            {% for line in fieldset %}
+              <div class="mb-3 row">
+                {% for field in line %}
+                  <label class="col-sm-3 col-form-label fw-semibold" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                  </label>
+                  <div class="col-sm-9">
+                    {{ field.field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </fieldset>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% block submit_buttons_bottom %}
+    <div class="d-flex justify-content-between sticky-bottom bg-light border-top py-3 px-4 mt-5">
+      
+      <div>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Save
+        </button>
+        <button type="submit" class="btn btn-secondary">
+          <i class="bi bi-save"></i> Save and add another
+        </button>
+        {% if show_delete_link %}
+          <a href="{{ delete_url }}" class="btn btn-danger ms-2">
+            <i class="bi bi-trash"></i> Delete
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endblock %}
+  </form>
+</div>
+{% endblock %}

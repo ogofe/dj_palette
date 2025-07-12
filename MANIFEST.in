@@ -1,5 +1,14 @@
 include README.md
 include LICENSE
-recursive-include palette/templates *
-recursive-include palette/static *
-recursive-include palette/templatetags *
+include admin.py
+include apps.py
+include models.py
+include views.py
+include site.py
+include tests.py
+include __init__.py
+
+recursive-include templates *
+recursive-include static *
+recursive-include migrations *
+recursive-include templatetags *
