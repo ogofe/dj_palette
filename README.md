@@ -1,6 +1,4 @@
-
-
-# 🎨 django-palette
+# 🎨 django-palette [![PyPI Downloads](https://static.pepy.tech/personalized-badge/dj-palette?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/dj-palette)
 
 Build beautiful, dynamic Django admin pages using drag-and-drop components.
 
