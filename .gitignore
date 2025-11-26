@@ -18,6 +18,11 @@ build/
 *.egg
 .Python
 
+# Development-only folders (local development)
+project/
+core/
+manage.py
+
 # Development files (AI generated docs)
 BEFORE_AFTER.md
 BOOTSTRAP_TEMPLATES_GUIDE.md

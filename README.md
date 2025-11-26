@@ -319,19 +319,19 @@ See LICENSE file for details.
 
 ## 📚 Documentation & Links
 
-- **GitHub**: [https://github.com/ogofe/django-palette](https://github.com/ogofe/django-palette)
-- **PyPI**: [https://pypi.org/project/dj-palette/](https://pypi.org/project/dj-palette/)
+- **GitHub**: [https://github.com/ogofe/django-palette](https://github.com/ogofe/dj_palette)
+- **PyPI**: [https://pypi.org/project/dj-palette/](https://pypi.org/project/dj_palette/)
 - **Documentation**: [https://django-palette.readthedocs.io](https://django-palette.readthedocs.io)
-- **Issues**: [https://github.com/ogofe/django-palette/issues](https://github.com/ogofe/django-palette/issues)
+- **Issues**: [https://github.com/ogofe/django-palette/issues](https://github.com/ogofe/dj_palette/issues)
 
 ---
 
 ## 🚀 Getting Help
 
-- **Found a bug?** Open an issue on [GitHub](https://github.com/ogofe/django-palette/issues)
+- **Found a bug?** Open an issue on [GitHub](https://github.com/ogofe/dj_palette/issues)
 - **Have a question?** Check the [documentation](https://django-palette.readthedocs.io)
 - **Want to chat?** Reach out via email: 7thogofe@gmail.com
 
 ---
 
-Made with ❤️ for the Django community
+Made with ❤️ for the Django community, Stay updated by 🌟-ing the repo.
