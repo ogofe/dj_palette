@@ -1,3 +1,10 @@
+#DJango apps
+core/
+project/
+
+__pycache__/
+*/**__pycache__/
+
 # Development & IDE
 .vscode/
 .idea/
