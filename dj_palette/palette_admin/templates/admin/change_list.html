@@ -1,0 +1,595 @@
+{% extends "admin/base_site.html" %}
+{% load humanize i18n palette palette_admin admin_urls %}
+
+{% block content %}
+
+<style>
+  /* Main Container */
+  .change-list-container {
+    background-color: #f8f9fa;
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px);
+  }
+
+  .change-list-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Actions Section */
+  .actions {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  .actions form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .actions label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .actions select {
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: white;
+    color: #212529;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+  }
+
+  .actions select:hover {
+    border-color: #adb5bd;
+  }
+
+  .actions select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+
+  .actions button {
+    padding: 0.5rem 1.5rem;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+
+  .actions button:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  }
+
+  .actions button:active {
+    transform: translateY(0);
+  }
+
+  .action-counter {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-left: auto;
+    padding: 0.5rem 1rem;
+    background-color: #e7f1ff;
+    border-radius: 0.375rem;
+  }
+
+  .actions .hidden {
+    display: none;
+  }
+
+  .actions .all,
+  .actions .question,
+  .actions .clear {
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+  }
+
+  .actions a {
+    color: #0d6efd;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .actions a:hover {
+    text-decoration: underline;
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .view-toggle button {
+    padding: 0.5rem 1rem;
+    border: 2px solid #dee2e6;
+    background-color: white;
+    color: #495057;
+    cursor: pointer;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .view-toggle button.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    box-shadow: 0 0.25rem 0.5rem rgba(13, 110, 253, 0.25);
+  }
+
+  .view-toggle button:hover:not(.active) {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+  }
+
+  /* Grid View Styles */
+  .grid-view {
+    display: none;
+  }
+
+  .grid-view.active{
+    display: initial;
+  }
+
+  .grid-view > .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    border-color: #0d6efd;
+  }
+
+  .grid-view .result-item .item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .grid-view .result-item .item-actions a {
+    display: inline-block;
+    padding: 0.4rem 0.75rem;
+    background-color: #e7f1ff;
+    color: #0d6efd;
+    text-decoration: none;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .grid-view .result-item .item-actions a:hover {
+    background-color: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .grid-view .result-item .item-actions a.deletelink {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .grid-view .result-item .item-actions a.deletelink:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  /* List View Styles */
+  .list-view {
+    display: none;
+  }
+
+  .list-view.active {
+    display: block;
+  }
+
+  .list-view .table-responsive {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #dee2e6;
+  }
+
+  .list-view table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+  }
+
+  .list-view table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  .list-view table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .list-view table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    color: #212529;
+    vertical-align: middle;
+  }
+
+  .list-view table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .list-view table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .list-view table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .list-view .item-checkbox {
+    width: 3rem;
+    text-align: center;
+  }
+
+  .list-view .item-checkbox input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+  }
+
+  .list-view table td:first-child {
+    font-weight: 600;
+    color: #0d6efd;
+  }
+
+  .list-view .item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .list-view .item-actions a {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    background-color: #e7f1ff;
+    color: #0d6efd;
+    text-decoration: none;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .list-view .item-actions a:hover {
+    background-color: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .list-view .item-actions a.deletelink {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .list-view .item-actions a.deletelink:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background-color: white;
+    border: 2px dashed #dee2e6;
+    border-radius: 0.5rem;
+    color: #6c757d;
+  }
+
+  .empty-state p {
+    font-size: 1.125rem;
+    margin: 0;
+    font-weight: 500;
+  }
+</style>
+
+{% with results=cl %}
+{% with result_list=cl.result_list %}
+
+
+<div class="change-list-container">
+  <div class="change-list-wrapper">
+  {% comment %} 
+    <div class="alert alert-info rounded-0 mb-2">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5> <strong>{{ results.opts.verbose_name_plural|capfirst }}:</strong> {{ result_list|length }}</h5>
+
+        <a href="{% url results.opts|admin_urlname:'add' %}" class="btn btn-small btn-outline rounded-0">
+          <i class="bi bi-plus-circle"></i> Add {{ results.opts.verbose_name|capfirst }}
+        </a>
+      </div>
+    </div> 
+  {% endcomment %}
+
+
+    <!-- Actions Section (Moved Above Toggle) -->
+    <div class="actions p-2">
+      {% block actions %}
+        <form method="post" id="changelist-form">
+          {% csrf_token %}
+          {% block actions-form %}
+            {% for field in action_form %}
+              {% if field.label %}
+                <div class="d-flex gap-2">
+                  <label>{{ field.label }}</label>
+                  {% if field.widget_type == 'select' %}
+                    <select name="{{ field.html_name }}" class="select2">
+                      <option disabled selected>Select an action</option>
+                      {% for opt in field.subwidgets %}
+                        {% if "----" in opt.choice_label  %}
+                        {% else %}
+                          <option value="{{ opt.id_for_label }}"> {{ opt.choice_label }} </option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                  {% endif %}
+                </div>
+              {% else %}
+                {{ field }}
+              {% endif %}
+            {% endfor %}
+          {% endblock %}
+
+          {% block actions-submit %}
+            <button type="submit" class="button" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+              {% trans "Go" %}
+            </button>
+          {% endblock %}
+
+        </form>
+
+        {% comment %} {% block actions-counter %}
+          
+        {% endblock %} {% endcomment %}
+      {% endblock %}
+    </div>
+
+    <!-- View Toggle -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap-reverse gap-2 mb-3">
+      <div class="view-toggle m-0">
+        <button class="view-btn active" data-view="grid" title="Grid View">
+          <i class="bi bi-grid-3x3-gap"></i> Grid View
+        </button>
+        <button class="view-btn" data-view="list" title="List View">
+          <i class="bi bi-list-ul"></i> List View
+        </button>
+      </div>
+
+      <a href="{% url results.opts|admin_urlname:'add' %}" class="btn btn-primary shadow-sm" data-view="list" title="List View">
+        <i class="bi bi-plus-circle"></i> Add {{ results.opts.verbose_name|capfirst }}
+      </a>
+    </div>
+
+    {% if actions_selection_counter %}
+      <span class="action-counter d-block mb-4" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+    {% endif %}
+
+  
+
+    <!-- Grid View -->
+    <div class="grid-view active">
+      {% if cl.result_list %}
+        <div class="row">
+          {% for item in cl.result_list %}
+            <div class="col-sm-6 col-lg-4 mb-2">
+              {% palette_ui file="palette/components/card.html" component="card" %}
+                {% palette_override card_header %}
+                  <div class="d-flex align-items-center gap-2">
+                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select">
+
+                    <h6> {{ results.opts.verbose_name|capfirst }} </h6>
+                  </div>
+                {% endpalette_override card_header %}
+
+                {% palette_override card_body %}
+                  {% for field_name in cl.list_display %}
+                    {% if field_name == '__str__' %}
+                      <p class="mb-1">
+                        <strong>{{ opts.verbose_name|capfirst }}:</strong> {{ item|getattr:field_name|truncatewords:10 }}
+                      </p>
+                    {% elif field_name == 'action_checkbox' %}
+                    {% else %}
+                      <p class="mb-1">
+                        <strong>{{ field_name|capfirst }}:</strong> {{ item|getattr:field_name|truncatewords:10 }}
+                      </p>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if action_form %}
+                  <hr />
+                  {% endif %}
+
+                  {% for field in action_form %}
+                    {% if field.label %}
+                      {% for action in field.subwidgets %}
+                        {% if "----" in action.choice_label  %}
+                        {% else %}
+                          {% with act_label=action.choice_label|action_label %}
+                            <button type="submit" class="btn btn-sm {% if act_label == 'delete' or 'Delete' %} btn-danger {% else %} btn-primary {% endif %}" form="changelist-form"> {{ act_label}} </button>
+                          {% endwith %}
+                        {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      {{ field }}
+                    {% endif %}
+                  {% endfor %}
+
+                {% endpalette_override card_body %}
+              {% endpalette_ui %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>{% trans "No items to display." %}</p>
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- List View -->
+    <div class="list-view">
+      {% if cl.result_list %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th class="item-checkbox">
+                  <input type="checkbox" id="action-toggle" class="action-toggle">
+                </th>
+
+                {% for field_name in cl.list_display %}
+                  {% if field_name == '__str__' %}
+                    <th>{% trans cl.opts.verbose_name|capfirst %}</th>
+                  {% elif field_name == 'action_checkbox' %}
+                  {% else %}
+                    <th>{% trans field_name|capfirst %}</th>
+                  {% endif %}
+                {% endfor %}
+                <th>{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cl.result_list %}
+                <tr>
+                  <td class="item-checkbox">
+                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select">
+                  </td>
+                  {% for field_name in cl.list_display %}
+                    {% if field_name == '__str__' %}
+                      <td><strong>{{ item|capfirst }}</strong></td>
+                    {% elif field_name == 'action_checkbox' %}
+                    {% else %}
+                      <td>
+                        {{ item|getattr:field_name }}
+                      </td>
+                    {% endif %}
+                  {% endfor %}
+                  <td>
+                    <div class="d-flex flex-nowrap gap-2">
+                      <a class="btn btn-sm btn-info" href="{{ item.get_admin_url }}{{ item.pk }}/view/" title="{% trans "View" %}">{% trans "View" %}</a>
+                      <a class="btn btn-sm btn-primary" href="{{ item.get_admin_url }}{{ item.pk }}/change/" title="{% trans "Edit" %}">{% trans "Edit" %}</a>
+                      {% if 'delete_{{model.name}}' in user.perms %}
+                        {{ user.perms }}
+                        <a href="{{ item.get_admin_url }}delete/" title="{% trans "Delete" %}" class="deletelink">{% trans "Delete" %}</a>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>{% trans "No items to display." %}</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script type="text/javascript" async>
+  document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const gridView = document.querySelector('.grid-view');
+    const listView = document.querySelector('.list-view');
+
+    viewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const viewType = this.getAttribute('data-view');
+        
+        // Update active button
+        viewButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update active view
+        if (viewType === 'grid') {
+          gridView.classList.add('active');
+          listView.classList.remove('active');
+          localStorage.setItem('adminViewType', 'grid');
+        } else {
+          gridView.classList.remove('active');
+          listView.classList.add('active');
+          localStorage.setItem('adminViewType', 'list');
+        }
+      });
+    });
+
+    // Remember user's view preference
+    const savedView = localStorage.getItem('adminViewType') || 'grid';
+    const savedButton = document.querySelector(`[data-view="${savedView}"]`);
+    if (savedButton) {
+      savedButton.click();
+    }
+
+    // Select all functionality
+    const actionToggle = document.getElementById('action-toggle');
+    if (actionToggle) {
+      actionToggle.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.action-select');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+      });
+    }
+  });
+</script>
+
+{% endwith %}
+{% endwith %}
+
+{% endblock content %}

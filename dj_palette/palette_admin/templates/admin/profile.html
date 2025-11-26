@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+
+
+
+{% block content %}
+<div class="container mt-4">
+    <h1>User Profile</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+            <p class="card-text">
+                <strong>Email:</strong> {{ user.email }}<br>
+                <strong>Last Login:</strong> {{ user.last_login|date:"Y-m-d H:i" }}<br>
+                <strong>Is Active:</strong> {{ user.is_active|yesno:"Yes,No" }}<br>
+                <strong>Is Staff:</strong> {{ user.is_staff|yesno:"Yes,No" }}<br>
+                <strong>Is Superuser:</strong> {{ user.is_superuser|yesno:"Yes,No" }}<br>
+            </p>
+            <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-primary">Edit Profile</a>
+            <form method="post" action="{% url 'admin:auth_user_delete' user.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete User</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

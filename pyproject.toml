@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools >= 77.0.3",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dj_palette"
+version = "1.0.0"
+authors = [
+  { name="Joel O. Tanko", email="7thogofe@gmail.com" },
+]
+description = "A Django admin system with tools for building custom admin interfaces and reusable components"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "Django>=2.2",
+]
+classifiers = [
+    "Framework :: Django",
+    "Framework :: Django :: 2.2",
+    "Framework :: Django :: 3.0",
+    "Framework :: Django :: 3.1",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+keywords = ["django", "admin", "ui", "components", "palette", "django admin"]
+license = { text = "MIT" }
+
+[project.urls]
+Homepage = "https://github.com/ogofe/dj_palette"
+Documentation = "https://django-palette.readthedocs.io"
+Issues = "https://github.com/ogofe/dj_palette/issues"
+Repository = "https://github.com/ogofe/dj_palette"
+
+[tool.setuptools]
+packages = ["dj_palette"]
+
+[tool.setuptools.package-data]
+dj_palette = [
+    "templates/**/*.html",
+    "static/**/*",
+    "migrations/**/*.py",
+    "templatetags/**/*.py",
+    "palette_admin/**/*",
+    "palette_admin/templates/**/*.html",
+    "palette_admin/static/**/*",
+    "palette_admin/migrations/**/*.py",
+]

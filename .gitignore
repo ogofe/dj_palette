@@ -1,0 +1,55 @@
+# Development & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+venv/
+env/
+.venv/
+*.py[cod]
+__pycache__/
+*.egg-info/
+dist/
+build/
+*.egg
+.Python
+
+# Development files (AI generated docs)
+BEFORE_AFTER.md
+BOOTSTRAP_TEMPLATES_GUIDE.md
+CODE_WALKTHROUGH.md
+QUICK_BOOTSTRAP_REFERENCE.md
+QUICK_REFERENCE.md
+REFACTORING_SUMMARY.md
+REPOSITORY_STRUCTURE.md
+PACKAGING_*.md
+PUBLISHING_READY.md
+TEMPLATES_COMPARISON.md
+TEMPLATES_STRUCTURE.md
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Documentation
+docs/_build/

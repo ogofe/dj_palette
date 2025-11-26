@@ -1,0 +1,49 @@
+{% load palette humanize i18n %}
+
+{% palette_component card %}
+<div class="card shadow-sm border-0" {{ onclick|safe }}>
+  <div class="card-header">
+  {% palette_block card_header %}
+    <h6 class="card-title text-muted">{{ title|default:"Card Title" }}</h6>
+  {% endpalette_block %}
+  </div>
+
+  <div class="card-body">
+    {% palette_block card_body %}
+      <h3>{{ content|default:"Card content" }}</h3>
+    {% endpalette_block %}
+  </div>
+
+  {% if include_footer %}
+    <div class="card-footer">
+    {% palette_block card_footer %}
+    {% endpalette_block %}
+  {% endif %}
+
+
+</div>
+{% endpalette_component %}
+
+
+{% palette_component admin_card %}
+<div class="card shadow-sm border-0" onclick="{{ onclick|safe }}">
+  <div class="card-header">
+  {% palette_block card_header %}
+    <h6 class="card-title text-muted">{{ title|default:"Admin Card Title" }}</h6>
+  {% endpalette_block %}
+  </div>
+
+  <div class="card-body">
+    {% palette_block card_body %}
+      <h3>{{ content|default:"Admin Card content" }}</h3>
+    {% endpalette_block %}
+  </div>
+
+  {% if include_footer|default:"False"  %}
+    <div class="card-footer">
+    {% palette_block card_footer %}
+    {% endpalette_block %}
+  {% endif %}
+  </div>
+</div>
+{% endpalette_component %}

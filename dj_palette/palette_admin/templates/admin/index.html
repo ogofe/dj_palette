@@ -1,0 +1,62 @@
+{% extends "admin/base_site.html" %}
+{% load i18n humanize tz palette palette_admin %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <div class="p-3">
+    <h2>Good {{ greeting }}, {{ user.get_full_name|default:user.username|title }}</h2>
+    <p class="text-muted">Welcome to your admin dashboard.</p>
+  </div>
+
+  <div class="row mx-0 mb-4">
+    <div class="col-md-4">
+      {% palette_ui file="palette/components/card.html" component="card" with title="Currently Logged in User"  onclick="window.alert('Total Users')" %}
+        {% palette_override card_body %}
+          <p> {{ request.user }} </p>
+          <p> {{ request.META|getattr:"REMOTE_HOST" }} </p>
+
+        {% endpalette_override %}
+      {% endpalette_ui %}
+    </div>
+
+    <div class="col-md-4">
+      {% palette_ui file="palette/components/card.html" component="admin_card" with title="Super Users" onclick="window.alert('Total Users')" %}
+
+      {% endpalette_ui %}
+    </div>
+
+    <div class="col-md-4">
+      {% palette_ui file="palette/components/card.html" component="card" with title="Active Users" onclick="window.alert('Total Users')" %}
+      {% endpalette_ui %}
+    </div>
+  </div>
+
+  <div>
+    {% for app in app_list %}
+      <div class="mb-5">
+        <div class="bg-dark p-2 my-2 text-white"> {{ app.name }} </div>
+        <div class="row mx-0 ">
+          {% for model in app.models %}
+          <div class="col col-sm-6 col-lg-4">
+            <div class="card">
+              <div class="card-header d-flex font-weight-bold justify-content-between align-items-center">
+                <h5> {{ model.name }} </h5>
+                <a href="{{ model.add_url }}" class="btn btn-sm btn-outline-info"> <i class="bi bi-plus"></i> Add </a>
+              </div>
+              
+              <div class="card-body">
+                <h4> {{ model.objects.count }} </h4>
+                <a href="{{ model.admin_url }}" class="btn btn-sm btn-primary w-100 btn-block mt-3">
+                  Manage {{ model.name }}
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock content %}

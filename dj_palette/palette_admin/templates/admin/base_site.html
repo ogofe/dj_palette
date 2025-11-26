@@ -1,0 +1,277 @@
+{% extends "admin/base.html" %}
+{% load i18n static palette humanize palette_admin %}
+{% block extrastyle %}
+<style>
+  body {
+    font-size: 0.95rem;
+    background-color: #f8f9fa;
+  }
+
+  .body-content .sidebar {
+    width: 300px;
+    position: fixed;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+    border-right: 1px solid #dee2e6;
+  }
+
+  .sidebar .nav-link {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .body-content .main-content {
+    width: calc(100% - 300px);
+    margin-left: 300px;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar-toggle {
+    background: none;
+    border: none;
+    color: #212529;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+  }
+
+  .sidebar-toggle:hover {
+    color: #0d6efd;
+  }
+
+  .topbar {
+    height: 60px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+  }
+  .account-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  .account-chip img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+  @media (max-width: 900px) {
+    .sidebar {
+      width: 300px;
+      height: 100vh;
+      overflow-x: hidden;
+      position: fixed;
+      top: 0;
+      z-index: 1030;
+      left: -350px;
+    }
+    .sidebar.open {
+      transition: width 0.3s ease-in-out;
+      width: 300px;
+      left: 0;
+    }
+
+    .sidebar:hover {
+      width: 300px;
+    }
+    .sidebar ~ .main-content {
+      margin-left: 0;
+    }
+
+    .sidebar-toggle {
+      display: flex;
+    }
+  }
+
+  .sidebar-add-btn {
+    width: 62px;
+  }
+
+  .chip{
+    background: grey;
+    padding: 5px 5px;
+    min-width: 100px;
+    color: #fff;
+    text-transform: capitalize;
+    border-radius: 30px;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="body-content d-flex">
+  {% block sidebar %}
+  <div class="sidebar collapsed">
+    <div class="d-flex align-items-center justify-content-center gap-4 text-center mb-4 py-4">
+      {% if site_logo %}
+      <img src="{{ site_logo }}" alt="{{ site_header }} logo" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
+      {% elif site_icon %}
+      <i class="{{ site_icon }} fs-2"></i>
+      {% else %}
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+      {% endif %}
+      <h5 class="text-center mb-0"> {{ site_header|default:"Palette"}} </h5>
+    </div>
+
+    <div class="nav flex-column mb-3 p-2">
+      <a href="{% url 'admin:index' %}" class="nav-link {% if request.path == '/admin/' %}active{% endif %}">
+        <i class="bi bi-house-door-fill me-2"></i> Dashboard
+      </a>
+    </div>
+
+    {% with app_list=available_apps %}
+      {% for app in app_list %}
+        <div>
+            <a href="{{ app.app_url }}" class="gap-2 text-decoration-none d-flex fw-bold bg-secondary text-white p-2 m-0">
+              <i class="icon {{ app|app_icon_class }}"></i>
+              <span class="small"> {{ app.name }} </span>
+            </a>
+            <div class="nav flex-column mb-2 p-2 gap-3">
+            {% for model in app.models %}
+                <div class="nav-item px-2 bg-light rounded-0 d-flex align-items-center justify-content-between">
+                    <a href="{{ model.admin_url }}" class="nav-link d-flex justify-content-between align-items-center {% if model.admin_url in request.path %}active{% endif %}">
+                    <span><i class="icon {{ model|model_icon_class:app.app_label}} me-2"></i>{{ model.name }}</span>
+                    {% if model.add_url %}
+                      <a href="{{ model.add_url }}" class="btn btn-sm btn-primary sidebar-add-btn"><i class="bi bi-plus-circle"></i>  Add</a>
+                    {% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+  {% endblock sidebar %}
+
+  <div class="main-content flex-grow-1">
+    {% block topbar %}
+    <div class="topbar">
+      <div class="d-flex align-items-center gap-2">
+        <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+          <i class="bi bi-list"></i>
+        </button>
+        <h5 class="mb-0">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</h5>
+      </div>
+
+      <div class="dropdown chip">
+        <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="User">
+          <span>{{ user.get_full_name|default:user.username }}</span>
+        </div>
+        <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
+          {% csrf_token %}
+        </form>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'admin:password_change' %}"><i class="bi bi-key"></i> Change Password</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button type="submit" form="logout" class="dropdown-item" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
+        </ul>
+      </div>
+    </div>
+    {% endblock topbar %}
+
+    {% block back_button %}
+    <div class="px-2 py-2">
+      {% if request.path != '/admin/' %}
+        <a href="{% back_button %}" class="btn btn-small btn-outline-secondary me-3" title="Back">
+          <i class="bi bi-arrow-left"></i> Back
+        </a>
+      {% endif %}
+    </div>
+    {% endblock back_button %}
+    
+    <div class="d-block">
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.sidebar');
+    const bodyContent = document.querySelector('.body-content');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const SIDEBAR_STATE_KEY = 'sidebarCollapsed';
+
+    window.sidebar = sidebar;
+
+    // Check if sidebar was previously collapsed
+    const isSidebarCollapsed = sidebar.classList.contains('collapsed');
+    
+    // Toggle sidebar on button click
+    sidebarToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log("Sidebar is collapsed?", isSidebarCollapsed)
+
+      if (isSidebarCollapsed){
+        sidebar.classList.replace('collapsed', 'open');
+        bodyContent.classList.add('sidebar-collapsed');
+      }else{
+        sidebar.classList.replace('open', 'collapsed');
+        bodyContent.classList.remove('sidebar-collapsed');
+      }
+
+      // Update toggle icon
+      updateToggleIcon();
+    });
+
+    // Close sidebar when clicking outside (mobile)
+    document.addEventListener('click', function(e) {
+      if (window.innerWidth < 900) {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+          sidebar.classList.replace('open', 'collapsed');
+          bodyContent.classList.add('sidebar-collapsed');
+        }
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      const _isSidebarCollapsed = sidebar.classList.contains('collapsed');
+      
+      if (window.innerWidth >= 900) {
+        // Desktop: restore from saved state
+        if (_isSidebarCollapsed) {
+          bodyContent.classList.add('sidebar-collapsed');
+        } else {
+          sidebar.classList.replace('open', 'collapsed');
+          bodyContent.classList.add('sidebar-collapsed');
+        }
+      }
+    });
+
+    function updateToggleIcon() {
+      const icon = sidebarToggle.querySelector('i');
+      if (sidebar.classList.contains('collapsed')) {
+        icon.classList.remove('bi-list');
+        icon.classList.add('bi-list-ul');
+      } else {
+        icon.classList.remove('bi-list-ul');
+        icon.classList.add('bi-list');
+      }
+    }
+
+    // Initialize icon
+    updateToggleIcon();
+  });
+</script>
+{% endblock body %}

@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% load palette %}
+
+{% block content %}
+<div class="p-3">
+  <h1>Custom Dashboard</h1>
+
+  <!-- Render a custom built card component with context -->
+  {% palette_ui "palette/components/card.html" with title="Total Users" content="Welcome back {{ request.user }}" onclick="alert('Hello')" %}
+
+</div>
+
+{% endblock %}

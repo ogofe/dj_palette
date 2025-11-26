@@ -1,0 +1,9 @@
+{% extends "deux/base.html" %}
+{% load custom_admin_tags %}
+
+{% block content %}
+  <h1>{{ page.title }}</h1>
+  {% for component in layout %}
+    {{ component.name|custom_admin_render:component.props }}
+  {% endfor %}
+{% endblock %}

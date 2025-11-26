@@ -1,0 +1,18 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include setup.py
+
+recursive-include dj_palette/templates *
+recursive-include dj_palette/static *
+recursive-include dj_palette/migrations *.py
+recursive-include dj_palette/templatetags *.py
+recursive-include dj_palette/palette_admin/templates *
+recursive-include dj_palette/palette_admin/static *
+recursive-include dj_palette/palette_admin/migrations *.py
+
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude .git
+global-exclude .gitignore
+global-exclude .env*

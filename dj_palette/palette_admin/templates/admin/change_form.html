@@ -1,0 +1,366 @@
+{% extends "admin/base_site.html" %}
+{% load i18n humanize admin_urls static palette %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .dj-palette-file-upload-zone {
+      border: 2px dashed #dee2e6;
+      border-radius: 0.375rem;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: #f8f9fa;
+    }
+
+    .dj-palette-file-upload-zone:hover {
+      border-color: #0d6efd;
+      background-color: #f0f7ff;
+    }
+
+    .dj-palette-file-upload-zone.dragover {
+      border-color: #0d6efd;
+      background-color: #e7f1ff;
+      box-shadow: 0 0 10px rgba(13, 110, 253, 0.25);
+    }
+
+    .dj-palette-file-upload-content i {
+      font-size: 2.5rem;
+      color: #0d6efd;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .dj-palette-file-upload-content p {
+      color: #6c757d;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .dj-palette-file-input-hidden {
+      display: none;
+    }
+
+    .file-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .preview-item {
+      position: relative;
+      border-radius: 0.375rem;
+      overflow: hidden;
+      background-color: #f8f9fa;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-item img {
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+    }
+
+    .file-item {
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .file-item i {
+      font-size: 2rem;
+      color: #6c757d;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-item p {
+      color: #6c757d;
+      font-size: 0.85rem;
+      word-break: break-word;
+      margin: 0;
+    }
+
+    .remove-file {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      background: rgba(220, 53, 69, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .preview-item:hover .remove-file {
+      opacity: 1;
+    }
+
+    .remove-file:hover {
+      background: rgba(220, 53, 69, 1);
+    }
+  </style>
+{% endblock extrastyle %}
+
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="my-4">
+      {% if change %}<h6 class="text-muted">Editing: {{ original }}</h6>{% endif %}
+      {% if add %}<h6 class="text-muted">Create a new : {{ adminform.form|dir }}</h6>{% endif %}
+    </div>
+
+    <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+      {% csrf_token %}
+
+      {% if is_popup %}
+        <input type="hidden" name="_popup" value="1">
+      {% endif %}
+
+      {% if to_field %}
+        <input type="hidden" name="_to_field" value="{{ to_field }}">
+      {% endif %}
+
+      {% if add %}
+        <input type="hidden" name="_saveasnew" value="true">
+        <input type="hidden" name="_save" value="true">
+        <input type="hidden" name="_continue" value="{% url 'palette_admin:index' %}">
+      {% endif %}
+
+      {% if change %}
+        <input type="hidden" name="_save" value="true">
+        <input type="hidden" name="id" value="{{ object.id }}">
+      {% endif %}
+
+      <div class="row">
+        <div class="col-lg-12">
+          {% for fieldset in adminform %}
+            <fieldset class="mb-4 border rounded p-3 bg-white">
+              {% if fieldset.name %}
+                <legend class="h5 border-bottom pb-2 mb-3">{{ fieldset.label }}</legend>
+              {% endif %}
+
+              {% if fieldset.description %}
+                <p class="text-muted">{{ fieldset.description|safe }}</p>
+              {% endif %}
+
+              <div class="mb-3 row">
+              {% for line in fieldset %}
+                {% for field in line %}
+                    <div class="
+                    {% if field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
+                    col-12 
+                    {% elif field|widget_type == 'admintextarea' %}
+                    col-12 
+                    {% else %} col-sm-6 col-md-6 {% endif %} mb-3">
+                    
+                      <label for="{{ field.id_for_label }}" class="fw-semibold">
+                        {{ field.label_tag }}
+                        {% if field.field.is_required %}<span class="text-danger">*</span>{% endif %}
+                      </label>
+
+                      {% if field|widget_type == 'relatedfieldwidgetwrapper' and not field|is_multiple_select %}
+                          <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 form-control">
+                            {% for option in field.field.field.choices %}
+                              <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
+                                {{ option.1 }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                      {% elif field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
+                        <div class="custom-multiselect">
+                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 form-control">
+                            {% for option in field.field.field.choices %}
+                              <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
+                                {{ option.1 }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      {% elif field|widget_type == "adminfile" %}
+                        <div class="dj-palette-file-upload-zone" id="dj-palette-dropzone-{{ field.field.id_for_label }}">
+                          <div class="dj-palette-file-upload-content">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <p>Drag and drop files here or click to browse</p>
+                            <input type="file" name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="dj-palette-file-input-hidden" {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}>
+                          </div>
+                          <div class="dj-palette-file-preview mt-3" id="preview-{{ field.id_for_label }}">
+                            {% if field.value %}
+                              <div class="preview-item">
+                                {% if "image" in field.field.widget.attrs.accept|default:"" or field.value|lower|slice:"-4:" in ".jpg,.png,.gif,.webp" %}
+                                  <img src="{{ field.value.url }}" alt="Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                {% else %}
+                                  <div class="file-item">
+                                    <i class="bi bi-file-earmark"></i>
+                                    <p>{{ field.value.name }}</p>
+                                  </div>
+                                {% endif %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% elif field|widget_type == "admintextarea" %}
+                        <textarea name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4">{% if field.value %} {{ field.value }} {% else %} {% endif %}</textarea>
+                      {% elif field|widget_type == "checkbox" %}
+                        <div class="form-check">
+                          <input type="checkbox" name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-check-input" {% if field.value %}checked{% endif %}>
+                          <label class="form-check-label" for="{{ field.field.id_for_label }}">{{ field.label_tag }}</label>
+                        </div>
+                      {% elif field|widget_type == "adminemailinput" %}
+                        <input type="email" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control" id="{{ field.field.id_for_label }}">
+                      {% elif field|widget_type == "adminsplitdatetime" %}
+                        <input type="datetime-local" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control" id="{{ field.field.id_for_label }}">
+                      {% elif field|widget_type == "adminurlfield" %}
+                        <input type="url" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
+                      {% elif field|widget_type == "admintextinput" and field.field.name == 'password' %}
+                        <input type="password" name="{{ field.field.html_name }}" disabled="true" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
+                        <p class="small"> To change the password, use this "form" </p>
+                      {% elif field|widget_type == "admintextinput" %}
+                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value }}" />
+                      {% elif field|widget_type == "adminuuidinput" %}
+                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value }}" />
+                      {% else %}
+                        {% comment %} {{ field.field  }} {% endcomment %}
+                        {% comment %} <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control" rows="4">{{ field.field.widget_type }}</textarea> {% endcomment %}
+                        {% comment %} <input type="text" name="{{ field.html_name }}" value="{{ field|dir }}" class="form-control" id="{{ field.id_for_label }}"> {% endcomment %}
+                      {% endif %}
+
+                      {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                      {% endif %}
+                      {% if field.errors %}
+                        <div class="text-danger px-0 small">{{ errors|first }}</div>
+                      {% endif %}
+                    </div>
+                {% endfor %}
+              {% endfor %}
+              </div>
+              
+            </fieldset>
+          {% endfor %}
+
+        </div>
+      </div>
+
+      {% block submit_buttons_bottom %}
+      <div class="d-flex justify-content-between sticky-bottom bg-light border-top py-3 px-4 mt-5">
+        <div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save
+          </button>
+          <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-save"></i> Save and add another
+          </button>
+          {% if show_delete_link %}
+            <a href="{{ delete_url }}" class="btn btn-danger ms-2">
+              <i class="bi bi-trash"></i> Delete
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endblock %}
+    </form>
+  </div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('.select2').select2();
+
+        // File upload dropzone functionality
+        const dropzones = document.querySelectorAll('.dj-palette-file-upload-zone');
+        
+        dropzones.forEach(zone => {
+          const fileInput = zone.querySelector('.dj-palette-file-input-hidden');
+          const previewContainer = zone.querySelector('.dj-palette-file-preview');
+
+          console.log("File Input:", fileInput)
+          console.log("Preview Container:", previewContainer)
+          
+          // Click to browse
+          zone.addEventListener('click', () => fileInput.click());
+          
+          // Drag and drop
+          zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.add('dragover');
+          });
+          
+          zone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('dragover');
+          });
+          
+          zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              fileInput.files = files;
+              updatePreview(fileInput, previewContainer);
+            }
+          });
+          
+          // File input change
+          fileInput.addEventListener('change', () => {
+            updatePreview(fileInput, previewContainer);
+          });
+        });
+        
+        function updatePreview(fileInput, previewContainer) {
+          const files = fileInput.files;
+          previewContainer.innerHTML = '';
+          
+          if (files.length === 0) return;
+          
+          Array.from(files).forEach((file, index) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            
+            if (file.type.startsWith('image/')) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                previewItem.innerHTML = `
+                  <img src="${e.target.result}" alt="Preview">
+                  <button type="button" class="remove-file" data-index="${index}" title="Remove">
+                    <i class="bi bi-x"></i>
+                  </button>
+                `;
+              };
+              reader.readAsDataURL(file);
+            } else {
+              previewItem.innerHTML = `
+                <div class="file-item">
+                  <i class="bi bi-file-earmark"></i>
+                  <p>${file.name}</p>
+                </div>
+                <button type="button" class="remove-file" data-index="${index}" title="Remove">
+                  <i class="bi bi-x"></i>
+                </button>
+              `;
+            }
+            
+            previewContainer.appendChild(previewItem);
+          });
+        }
+      }
+    );
+  </script>
+{% endblock extra_scripts %}
