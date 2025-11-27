@@ -6,28 +6,59 @@
 {% block content %}
   <div class="p-3">
     <h2>Good {{ greeting }}, {{ user.get_full_name|default:user.username|title }}</h2>
-    <p class="text-muted">Welcome to your admin dashboard.</p>
+    <p>Welcome to your admin dashboard.</p>
   </div>
 
   <div class="row mx-0 mb-4">
-    <div class="col-md-4">
-      {% palette_ui file="palette/components/card.html" component="card" with title="Currently Logged in User"  onclick="window.alert('Total Users')" %}
+    <div class="col-sm-6 col-md-5">
+      {% palette_ui file="palette/components/card.html" component="card" with title="Current Session"  onclick="window.alert('Total Users')" %}
+        {% comment %} {% palette_override card_header %}{% endpalette_override card_header %} {% endcomment %}
         {% palette_override card_body %}
-          <p> {{ request.user }} </p>
-          <p> {{ request.META|getattr:"REMOTE_HOST" }} </p>
+          <p> <strong> Logged in as: </strong> {{ request.user|capfirst }} </p>
+          <p class="mb-1"><strong> Last login: </strong> </p>
+          <p class='small mb-1'> <i class="bi bi-calendar"></i> {{ request.user.last_login.date }} </p>
+          <p class='small mb-1'> <i class="bi bi-clock"></i> {{ request.user.last_login.time }} </p>
 
+          <div class="d-flex justify-content-end mt-2">
+            <a href="{% url 'palette_admin:logout' %}" class="btn btn-sm btn-warning"> Sign out </a>
+          </div>
         {% endpalette_override %}
       {% endpalette_ui %}
     </div>
 
-    <div class="col-md-4">
-      {% palette_ui file="palette/components/card.html" component="admin_card" with title="Super Users" onclick="window.alert('Total Users')" %}
-
-      {% endpalette_ui %}
-    </div>
-
-    <div class="col-md-4">
-      {% palette_ui file="palette/components/card.html" component="card" with title="Active Users" onclick="window.alert('Total Users')" %}
+    <div class="col-sm-6 col-md-7">
+      {% palette_ui file="palette/components/card.html" component="card" with title="Recent Activity" onclick="window.alert('Total Users')" %}
+        {% palette_override card_body %}
+          {% if recent_actions %}
+            <div class="list-group p-0">
+              {% for log in recent_actions %}
+              <a href="{% if log.admin_url %}{{ log.admin_url }}{% else %}#{% endif %}" class="list-group-item list-group-item-action {% if not log.admin_url %}disabled{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1 small">
+                      {% if log.is_addition %}
+                        <span class="badge bg-success">Added</span>
+                      {% elif log.is_change %}
+                        <span class="badge bg-warning">Changed</span>
+                      {% elif log.is_deletion %}
+                        <span class="badge bg-danger">Deleted</span>
+                      {% endif %}
+                      {{ log.content_type.name|capfirst }}
+                    </h6>
+                    <p class="mb-0 small">{{ log.object_repr|capfirst|truncatewords:5 }}</p>
+                  </div>
+                  <small>{{ log.action_time|timesince }} ago</small>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="h-25 text-center">
+              <h1 class="bi bi-inbox"></h1>
+              <h5>Nothing to show here!</h5>
+            </div>
+          {% endif %}
+        {% endpalette_override %}
       {% endpalette_ui %}
     </div>
   </div>
@@ -35,10 +66,10 @@
   <div>
     {% for app in app_list %}
       <div class="mb-5">
-        <div class="bg-dark p-2 my-2 text-white"> {{ app.name }} </div>
+        <div class="p-2 my-2" style="background-color: var(--bs-dark); color: var(--bs-light);"> {{ app.name }} </div>
         <div class="row mx-0 ">
           {% for model in app.models %}
-          <div class="col col-sm-6 col-lg-4">
+          <div class="mb-4 col-sm-6 col-lg-4">
             <div class="card">
               <div class="card-header d-flex font-weight-bold justify-content-between align-items-center">
                 <h5> {{ model.name }} </h5>

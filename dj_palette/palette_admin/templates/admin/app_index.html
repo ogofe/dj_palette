@@ -5,9 +5,9 @@
 {% with app=app_list|first %}
   <div class="container py-4">
   <h4> Showing all Data Tables in `{{ app.app_label|capfirst }}`. </h4>
-    <div class="row dashboard-cards mx-0 gap-3 mb-4 p-0">
+    <div class="row mx-0">
       {% for model in app.models %}
-        <div class="col-md-4 spacing-1 mb-4 p-0">
+        <div class="col-sm-6 col-lg-4 mb-4">
           {% palette_ui file="palette/components/card.html" component="card" with title="{{ model.name }}" onclick="alert('Total Users')" %}
           
             {% palette_override card_body %}

@@ -19,7 +19,7 @@ Installation (1 minute)
 
    INSTALLED_APPS = [
        'dj_palette',
-       'dj_palette.palette_admin',
+       'dj_palette.palette_admin', # optional, only if you want the best looking admin UI
        'django.contrib.admin',
        # ... rest of your apps
    ]
@@ -75,7 +75,7 @@ In your template (e.g., ``templates/admin/index.html``):
 
    <div class="row">
      <div class="col-md-4">
-       {% palette_ui "stat_card" with number="1,234" label="Total Users" %}
+       {% palette_ui "stat_card" with number="1,234" label="Total Users" %} {% endpalette_ui %}
      </div>
      
      <div class="col-md-4">
@@ -110,7 +110,7 @@ Customize Further
 ~~~~~~~~~~~~~~~~~~
 
 - Override admin templates in your project's ``templates/admin/`` directory
-- Create more components in ``templates/components/``
+- Create more components in ``templates/components/`` or ``<your_app>/templates/<your_app>/components/`` (always use named subfolders when going with in-app templates approach)
 - Use the filters: ``admin_fields`` and ``admin_field``
 
 Need Help?
@@ -148,13 +148,13 @@ Create ``templates/admin/index.html``:
        
        <div class="row mt-4">
          <div class="col-md-4">
-           {% palette_ui "stat_card" with number="1,234" label="Total Users" %}
+           {% palette_ui "stat_card" with number="1,234" label="Total Users" %}{% endpalette_ui %}
          </div>
          <div class="col-md-4">
-           {% palette_ui "stat_card" with number="456" label="Active Sessions" %}
+           {% palette_ui "stat_card" with number="456" label="Active Sessions" %}{% endpalette_ui %}
          </div>
          <div class="col-md-4">
-           {% palette_ui "stat_card" with number="789" label="Total Orders" %}
+           {% palette_ui "stat_card" with number="789" label="Total Orders" %}{% endpalette_ui %}
          </div>
        </div>
      </div>

@@ -50,11 +50,44 @@ def edit_admin_page(request, slug):
 
 class PaletteChangList(ChangeList):
       
-	def __init__(self, request, grid_display, grid_display_links, grid_actions, **kwargs):
+	def __init__(
+			self,
+        request,
+        model,
+        list_display,
+        list_display_links,
+        list_filter,
+        date_hierarchy,
+        search_fields,
+        list_select_related,
+        list_per_page,
+        list_max_show_all,
+        list_editable,
+        model_admin,
+        sortable_by,
+        search_help_text,
+		grid_display,
+		grid_display_links,
+	):
+		super().__init__(
+			request,
+			model,
+			list_display,
+			list_display_links,
+			list_filter,
+			date_hierarchy,
+			search_fields,
+			list_select_related,
+			list_per_page,
+			list_max_show_all,
+			list_editable,
+			model_admin,
+			sortable_by,
+			search_help_text,
+		)
 		self.grid_display = grid_display
 		self.grid_display_links = grid_display_links
-		self.grid_actions = grid_actions
-		super().__init__(**kwargs)
+		# self.grid_actions = grid_actions
 
 	
 

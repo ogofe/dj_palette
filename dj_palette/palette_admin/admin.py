@@ -49,6 +49,7 @@ class PaletteModelAdmin(admin.ModelAdmin):
     grid_display_links = ("__str__", )
     detail_view_template = None
 
+
     def get_urls(self):
         from django.urls import path
         urls:list = super().get_urls()
@@ -110,6 +111,31 @@ class PaletteModelAdmin(admin.ModelAdmin):
     def detail_view(self, request, **kwargs):
         return 
 
+
+    def get_search_fields(self, request):
+        """
+        Override get_search_fields to validate and filter out invalid search fields.
+        This prevents FieldError when search_fields contains invalid field names.
+        """
+        search_fields = super().get_search_fields(request)
+        
+        if not search_fields:
+            return []
+        
+        # Get all valid field names from the model
+        valid_field_names = {f.name for f in self.model._meta.get_fields()}
+        
+        # Filter to only include valid fields and exclude '__str__' which is not a real field
+        valid_search_fields = tuple(
+            field for field in search_fields 
+            if field and field != '__str__' and field in valid_field_names
+        )
+        
+        return valid_search_fields
+
+    def get_changelist(self, request, **kwargs):
+        from dj_palette.palette_admin.views import PaletteChangList
+        return PaletteChangList
     
     def get_changelist_instance(self, request):
         """
@@ -130,8 +156,6 @@ class PaletteModelAdmin(admin.ModelAdmin):
             self.model,
             list_display,
             list_display_links,
-            grid_display,
-            grid_display_links,
             self.get_list_filter(request),
             self.date_hierarchy,
             self.get_search_fields(request),
@@ -142,6 +166,8 @@ class PaletteModelAdmin(admin.ModelAdmin):
             self,
             sortable_by,
             self.search_help_text,
+            grid_display,
+            grid_display_links,
         )
 
     
@@ -478,9 +504,12 @@ class PaletteModelAdmin(admin.ModelAdmin):
         )
 
         
-
+class UserModelAdmin(PaletteModelAdmin):
+    list_display = ('username', 'first_name', 'last_name', 'is_staff', 'email', 'last_login')
+    list_display_links = ('username', 'first_name', 'email',)
+    search_fields = ('username', 'first_name', 'last_name', 'email')
 
 
 palette_admin = PaletteAdminSite(name='palette_admin')
-palette_admin.register(User)
+palette_admin.register(User, UserModelAdmin)
 palette_admin.register(Group)

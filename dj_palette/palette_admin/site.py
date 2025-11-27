@@ -17,6 +17,13 @@ from django.urls import NoReverseMatch, Resolver404, resolve, reverse, reverse_l
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.conf import settings
+from django.contrib.admin.models import LogEntry
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView,
+)
 from .conf import (
     SETTINGS,
 )
@@ -41,10 +48,15 @@ class PaletteAdminSite(AdminSite):
             path('logout/', self.logout, name='logout'),
             path('password_change/', self.password_change, name='password_change'),
             path('password_change/done/', self.password_change_done, name='password_change_done'),
+            path('password-reset/', PasswordResetView.as_view(), name='password_reset'),
+            path('password-reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
+            path('password-reset/confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(success_url='palette_admin:password_reset_done'), name='password_reset_confirm'),
+            path('password-reset/complete/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
             path('support_chat/', self.admin_view(self.support_chat_view), name='support_chat'),
             path('profile/', self.admin_view(self.profile_view), name='profile'),
             re_path(r'^(?P<app_label>\w+)/$', self.admin_view(self.app_index), name='app_list'),
         ] + super().get_urls()
+
 
         if PALETTE_SETTINGS.get('show_editor', True):
             custom_urls.extend([
@@ -63,7 +75,6 @@ class PaletteAdminSite(AdminSite):
     def logout(self, request, **kwargs):
         logout(request)
         return redirect('palette_admin:login') # Redirect to the login page after logout
-
 
     @method_decorator(never_cache)
     @login_not_required
@@ -145,10 +156,35 @@ class PaletteAdminSite(AdminSite):
         if 12 < now.hour <= 16:greeting='Afternoon'
         if now.hour > 16:greeting='Evening'
 
+        # Get recent actions by the logged-in user (last 10)
+        recent_actions = LogEntry.objects.filter(
+            user=request.user
+        ).select_related(
+            'user', 'content_type'
+        ).order_by('-action_time')[:7]
+
+        # Build admin URLs for each log entry
+        for log in recent_actions:
+            print("Got Action:", log)
+            if not log.is_deletion() and log.object_id:
+                try:
+                    app_label = log.content_type.app_label
+                    model_name = log.content_type.model
+                    log.admin_url = reverse(
+                        f'{self.name}:{app_label}_{model_name}_change',
+                        args=[log.object_id],
+                        current_app=self.name
+                    )
+                except Exception as error:
+                    log.admin_url = None
+            else:
+                log.admin_url = None
+
         context.update({
             'greeting': greeting,
             'user': request.user,
             'app_list': self.get_app_list(request),
+            'recent_actions': recent_actions,
             # **extra_context if extra_context else 
         })
         

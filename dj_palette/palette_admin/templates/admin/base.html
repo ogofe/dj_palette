@@ -4,14 +4,14 @@
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
 <head>
   <title>{% block title %}Admin{% endblock %}</title>
-  {% block stylesheet %}
-    <link rel="stylesheet" href="{% static 'palette/css/base.css' %}">
-  {% endblock %}
   
+  {% block stylesheet %}
   <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/bootstrap-icons.css'%}" rel="stylesheet">
   <link href="{% static 'css/select2.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/select2-bootstrap-5-theme.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/palette-admin.css' %}">
+  {% endblock %}
 
   {% block dark-mode-vars %}{% endblock %}
   {% block extrastyle %}{% endblock %}
@@ -20,17 +20,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {% endblock %}
   {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
-  <style>
-    span.select2-selection{
-      padding-top: 5px !important;
-      min-height: 40px !important;
-    }
 
-    .select2-container--default .select2-selection--single .select2-selection__arrow{
-      top: 15%;
-    }
-
-  </style>
 </head>
 
 <body>

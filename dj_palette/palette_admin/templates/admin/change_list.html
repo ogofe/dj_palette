@@ -1,12 +1,18 @@
 {% extends "admin/base_site.html" %}
 {% load humanize i18n palette palette_admin admin_urls %}
 
+{% block topbar %}
+{% comment %} {% block page_title %} {{ cl.opts.verbose_name_plural|title }} {% endblock page_title %} {% endcomment %}
+{{ block.super }}
+
+{% endblock topbar %}
+
 {% block content %}
 
 <style>
   /* Main Container */
   .change-list-container {
-    background-color: #f8f9fa;
+    background-color: var(--bs-bg-light);
     padding: 2rem 0;
     min-height: calc(100vh - 200px);
   }
@@ -19,12 +25,13 @@
 
   /* Actions Section */
   .actions {
-    background-color: white;
-    border: 1px solid #dee2e6;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: 0.5rem;
     padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    color: var(--bs-body-color);
   }
 
   .actions form {
@@ -39,17 +46,17 @@
     align-items: center;
     gap: 0.75rem;
     font-weight: 600;
-    color: #212529;
+    color: var(--bs-body-color);
     margin: 0;
     font-size: 0.95rem;
   }
 
   .actions select {
     padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--input-border);
     border-radius: 0.375rem;
-    background-color: white;
-    color: #212529;
+    background-color: var(--input-bg);
+    color: var(--input-color);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
@@ -133,9 +140,9 @@
 
   .view-toggle button {
     padding: 0.5rem 1rem;
-    border: 2px solid #dee2e6;
-    background-color: white;
-    color: #495057;
+    border: 2px solid var(--card-border);
+    background-color: var(--card-bg);
+    color: var(--bs-body-color);
     cursor: pointer;
     border-radius: 0.375rem;
     font-size: 0.875rem;
@@ -154,8 +161,8 @@
   }
 
   .view-toggle button:hover:not(.active) {
-    background-color: #f8f9fa;
-    border-color: #adb5bd;
+    background-color: var(--bs-bg-light);
+    border-color: var(--card-border);
   }
 
   /* Grid View Styles */
@@ -221,28 +228,29 @@
   }
 
   .list-view .table-responsive {
-    background-color: white;
+    background-color: var(--table-bg);
     border-radius: 0.5rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--table-border);
   }
 
   .list-view table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 0;
+    color: var(--bs-body-color);
   }
 
   .list-view table thead {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 2px solid #dee2e6;
+    background: var(--bs-bg-light);
+    border-bottom: 2px solid var(--table-border);
   }
 
   .list-view table th {
     padding: 1rem;
     text-align: left;
     font-weight: 700;
-    color: #495057;
+    color: var(--bs-body-color);
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -250,17 +258,18 @@
 
   .list-view table td {
     padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-    color: #212529;
+    border-bottom: 1px solid var(--table-border);
+    color: var(--bs-body-color);
     vertical-align: middle;
   }
 
   .list-view table tbody tr {
     transition: all 0.2s ease;
+    background-color: var(--table-bg);
   }
 
   .list-view table tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: var(--table-hover);
   }
 
   .list-view table tbody tr:last-child td {
@@ -322,16 +331,85 @@
   .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-    background-color: white;
-    border: 2px dashed #dee2e6;
+    background-color: var(--card-bg);
+    border: 2px dashed var(--card-border);
     border-radius: 0.5rem;
-    color: #6c757d;
+    color: var(--text-muted);
   }
 
   .empty-state p {
     font-size: 1.125rem;
     margin: 0;
     font-weight: 500;
+  }
+
+  /* Search and Actions Container */
+  .search-actions-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 250px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  .search-box form {
+    margin: 0;
+  }
+
+  .search-box .input-group {
+    display: flex;
+    gap: 0;
+  }
+
+  .search-box .input-group-text {
+    background-color: var(--bs-bg-light);
+    border: 1px solid var(--input-border);
+    border-right: none;
+    border-radius: 0.375rem 0 0 0.375rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--bs-body-color);
+  }
+
+  .search-box .form-control {
+    border-radius: 0;
+  }
+
+  .search-box .btn {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .search-box .btn-secondary {
+    border-radius: 0 0.375rem 0.375rem 0;
+    border-left: none;
+  }
+
+  .actions-container {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  @media (max-width: 768px) {
+    .search-actions-container {
+      flex-direction: column;
+    }
+
+    .search-box,
+    .actions-container {
+      width: 100%;
+      min-width: unset;
+    }
   }
 </style>
 
@@ -341,59 +419,60 @@
 
 <div class="change-list-container">
   <div class="change-list-wrapper">
-  {% comment %} 
-    <div class="alert alert-info rounded-0 mb-2">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5> <strong>{{ results.opts.verbose_name_plural|capfirst }}:</strong> {{ result_list|length }}</h5>
 
-        <a href="{% url results.opts|admin_urlname:'add' %}" class="btn btn-small btn-outline rounded-0">
-          <i class="bi bi-plus-circle"></i> Add {{ results.opts.verbose_name|capfirst }}
-        </a>
-      </div>
-    </div> 
-  {% endcomment %}
+    <!-- Search and Actions Container -->
+    <div class="row card-body p-1 mx-0 justify-content-between rounded shadow-sm mb-3">
+      <!-- Search Section - Only show if search_fields are configured -->
+      {% if cl.search_fields %}
+        <div class="col-sm-6 col-lg-7 my-1">
+          <form id="searchbar" method="get" class="w-100">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" name="q" value="{{ cl.query }}" placeholder="{% trans 'Search' %}" class="form-control" aria-label="{% trans 'Search' %}">
+              <button type="submit" class="btn btn-primary">{% trans 'Search' %}</button>
+              {% if cl.query %}
+                <a href="{{ request.path }}" class="btn btn-secondary">{% trans 'Clear' %}</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      {% endif %}
 
-
-    <!-- Actions Section (Moved Above Toggle) -->
-    <div class="actions p-2">
-      {% block actions %}
-        <form method="post" id="changelist-form">
-          {% csrf_token %}
-          {% block actions-form %}
-            {% for field in action_form %}
-              {% if field.label %}
-                <div class="d-flex gap-2">
-                  <label>{{ field.label }}</label>
-                  {% if field.widget_type == 'select' %}
-                    <select name="{{ field.html_name }}" class="select2">
-                      <option disabled selected>Select an action</option>
-                      {% for opt in field.subwidgets %}
-                        {% if "----" in opt.choice_label  %}
+      <!-- Actions Section -->
+      <div class="{% if cl.search_fields %}col-sm-6 col-lg-5{% else %}col-12{% endif %} my-1">
+        <div class="w-100">
+          {% block actions %}
+            <form method="post" id="changelist-form">
+              {% csrf_token %}
+              <input type="hidden" name="select_across" value="0" class="select-across">
+              {% for field in action_form %}
+                {% if field.label %}
+                  <div class="d-flex gap-2 flex-1 w-100">
+                    <select name="{{ field.html_name }}" class="select2 form-control flex-1">
+                      <option disabled selected>{% trans 'Select an action' %}</option>
+                      {% for option in field.field.choices %}
+                        {% if "----" in option.1 %}
                         {% else %}
-                          <option value="{{ opt.id_for_label }}"> {{ opt.choice_label }} </option>
+                          <option value="{{ option.0 }}">{{ option.1 }}</option>
                         {% endif %}
                       {% endfor %}
                     </select>
-                  {% endif %}
-                </div>
-              {% else %}
-                {{ field }}
-              {% endif %}
-            {% endfor %}
+                    <button type="submit" class="btn btn-primary" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                      {% trans "Go" %}
+                    </button>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </form>
+
+            {% block actions-counter %}
+            {{ block.super }}  
+            {% endblock %}
           {% endblock %}
-
-          {% block actions-submit %}
-            <button type="submit" class="button" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
-              {% trans "Go" %}
-            </button>
-          {% endblock %}
-
-        </form>
-
-        {% comment %} {% block actions-counter %}
-          
-        {% endblock %} {% endcomment %}
-      {% endblock %}
+        </div>
+      </div>
     </div>
 
     <!-- View Toggle -->
@@ -434,24 +513,54 @@
                 {% endpalette_override card_header %}
 
                 {% palette_override card_body %}
-                  {% for field_name in cl.list_display %}
-                    {% if field_name == '__str__' %}
-                      <p class="mb-1">
-                        <strong>{{ opts.verbose_name|capfirst }}:</strong> {{ item|getattr:field_name|truncatewords:10 }}
-                      </p>
-                    {% elif field_name == 'action_checkbox' %}
-                    {% else %}
-                      <p class="mb-1">
-                        <strong>{{ field_name|capfirst }}:</strong> {{ item|getattr:field_name|truncatewords:10 }}
-                      </p>
-                    {% endif %}
-                  {% endfor %}
+                  {% if cl.grid_display %}
+                    {% for field_name in cl.grid_display %}
+                      {% if field_name == '__str__' %}
+                        <p class="mb-1">
+                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:10 }}
+                        </p>
+                      {% elif field_name == 'action_checkbox' %}
+                      {% else %}
+                        {% if field_name in cl.grid_display_links %}
+                          <p class="mb-1">
+                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|getattr:field_name|truncatewords:10 }} </a>
+                          </p>
+                        {% else %}
+                          <p class="mb-1">
+                            <strong>{{ field_name|humanize_name }}:</strong> {{ item|getattr:field_name|format_field_value }}
+                          </p>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    {% for field_name in cl.list_display %}
+                      {% if field_name == '__str__' %}
+                        <p class="mb-1">
+                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:10 }}
+                        </p>
+                      {% elif field_name == 'action_checkbox' %}
+                      {% else %}
+                        {% if field_name in cl.grid_display_links %}
+                          <p class="mb-1">
+                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|dir }} {{ item|getattr:field_name|truncatewords:10 }} </a>
+                          </p>
+                        {% else %}
+                          <p class="mb-1">
+                            <strong>{{ field_name|humanize_name }}:</strong> {{ item|getattr:field_name|format_field_value }}
+                          </p>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
 
                   {% if action_form %}
                   <hr />
                   {% endif %}
 
-                  {% for field in action_form %}
+                  <div class="d-flex gap-2">
+                    <a href="{{ item.pk }}/change/" class="btn btn-sm btn-primary"> Edit </a>
+                  </div>
+                  {% comment %} {% for field in action_form %}
                     {% if field.label %}
                       {% for action in field.subwidgets %}
                         {% if "----" in action.choice_label  %}
@@ -464,7 +573,7 @@
                     {% else %}
                       {{ field }}
                     {% endif %}
-                  {% endfor %}
+                  {% endfor %} {% endcomment %}
 
                 {% endpalette_override card_body %}
               {% endpalette_ui %}
@@ -494,7 +603,7 @@
                     <th>{% trans cl.opts.verbose_name|capfirst %}</th>
                   {% elif field_name == 'action_checkbox' %}
                   {% else %}
-                    <th>{% trans field_name|capfirst %}</th>
+                    <th>{% trans field_name|humanize_name %}</th>
                   {% endif %}
                 {% endfor %}
                 <th>{% trans "Actions" %}</th>
@@ -508,11 +617,15 @@
                   </td>
                   {% for field_name in cl.list_display %}
                     {% if field_name == '__str__' %}
-                      <td><strong>{{ item|capfirst }}</strong></td>
+                      <td> <a href="{{ item.get_admin_url }}{{item.pk}}/change/"> <strong>{{ item|capfirst }}</strong></a></td>
                     {% elif field_name == 'action_checkbox' %}
                     {% else %}
                       <td>
-                        {{ item|getattr:field_name }}
+                       {% if field_name in cl.list_display_links %}
+                         <a class="link text-decoration-none text-primary font-weight-bold" href="{{ item.get_admin_url }}{{item.pk}}/change/"> {{ item|getattr:field_name|format_field_value }} </a>
+                       {% else %}
+                         {{ item|getattr:field_name|format_field_value }}
+                       {% endif %}
                       </td>
                     {% endif %}
                   {% endfor %}

@@ -203,6 +203,10 @@
           {% trans "Sign In" %}
         </button>
       </form>
+
+        <div class="mt-3">
+          <p> {% trans "Forgot password? " %} <a href="{% url 'palette_admin:password_reset' %}">{% trans "Reset it here." %}</a> </p>
+        </div>
     </div>
 
     {% if site_footer %}

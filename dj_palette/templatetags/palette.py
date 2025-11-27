@@ -341,26 +341,6 @@ def _parse_quoted_value(val_str):
 
 
 class PaletteUINode(Node):
-    """
-    Renders a component instance with context variables and overrides.
-    
-    Structure:
-        {% palette_ui file="path/to/components.html" component="card" with title=page.title %}
-            {% palette_override card_header %}
-                <h2>{{ title }}</h2>
-            {% endpalette_override %}
-        {% endpalette_ui %}
-    
-    Execution flow:
-    1. Resolve file and component names from expressions
-    2. Resolve context variables (via 'with')
-    3. Locate component nodelist in PALETTE_COMPONENTS registry
-    4. Collect overrides from inner palette_override nodes
-    5. Push a new context layer with props
-    6. Set overrides in render_context
-    7. Render component nodelist
-    8. Restore context (pop) and clean up overrides
-    """
 
     def __init__(self, reserved, props, nodelist):
         """
@@ -504,14 +484,11 @@ class PaletteUINode(Node):
                 if isinstance(var_spec, tuple) and len(var_spec) == 2:
                     var_type, var_value = var_spec
                     if var_type == "literal":
-                        # Literal string value
                         local_vars[var_name] = var_value
                     elif var_type == "expression":
-                        # FilterExpression - resolve from context
                         resolved_value = var_value.resolve(context)
                         local_vars[var_name] = resolved_value
                     elif var_type == "tag":
-                        # Template tag - for now, pass as-is
                         local_vars[var_name] = var_value
                     else:
                         local_vars[var_name] = None
@@ -814,6 +791,55 @@ def admin_field(obj, field_name):
         return getattr(obj, field_name, None)
     except Exception:
         return None
+
+
+@register.filter(name='humanize_name')
+def humanize_name(value):
+    """
+    Convert snake_case or underscored names to Title Case.
+    
+    Example:
+        {{ "first_name"|humanize_name }} -> "First Name"
+        {{ "email_address"|humanize_name }} -> "Email Address"
+    """
+    if not value:
+        return value
+    return ' '.join(word.capitalize() for word in str(value).replace('_', ' ').split())
+
+
+@register.filter(name='format_field_value')
+def format_field_value(value, field_name=''):
+    """
+    Format field values based on their type and content.
+    Returns appropriate formatting for booleans, dates, datetimes, etc.
+    
+    Example:
+        {{ item|getattr:"is_active"|format_field_value }}
+    """
+    from django.utils.html import format_html
+    from datetime import date, datetime
+    
+    # Handle None/null values
+    if value is None or value == '':
+        return mark_safe('<span class="text-muted">—</span>')
+    
+    # Handle boolean values
+    if isinstance(value, bool):
+        if value:
+            return mark_safe('<i class="bi bi-check-circle-fill" style="color: #28a745; font-size: 1.2em;"></i>')
+        else:
+            return mark_safe('<i class="bi bi-x-circle-fill" style="color: #dc3545; font-size: 1.2em;"></i>')
+    
+    # Handle datetime objects
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d %H:%M')
+    
+    # Handle date objects
+    if isinstance(value, date):
+        return value.strftime('%Y-%m-%d')
+    
+    # Handle other types - convert to string
+    return str(value)
 
 
 

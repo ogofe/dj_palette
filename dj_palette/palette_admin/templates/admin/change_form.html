@@ -110,6 +110,40 @@
     .remove-file:hover {
       background: rgba(220, 53, 69, 1);
     }
+
+    /* Bootstrap Switch Toggle Styles */
+    .form-switch {
+      padding-left: 0;
+    }
+
+    .form-switch .form-check-input {
+      width: 2.5em;
+      height: 1.25em;
+      margin-left: 0;
+      margin-top: 0.125em;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,.25%29'/%3e%3c/svg%3e");
+      background-position: left center;
+      background-repeat: no-repeat;
+      background-size: 1.25em 1.25em;
+      border-radius: 2em;
+      transition: background-position 0.15s ease-in-out;
+      cursor: pointer;
+    }
+
+    .form-switch .form-check-input:checked {
+      background-position: right center;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255,255,255,.25%29'/%3e%3c/svg%3e");
+    }
+
+    .form-switch .form-check-input:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-switch .form-check-label {
+      margin-left: 0.5em;
+      user-select: none;
+    }
   </style>
 {% endblock extrastyle %}
 
@@ -117,8 +151,8 @@
 {% block content %}
   <div class="container-fluid">
     <div class="my-4">
-      {% if change %}<h6 class="text-muted">Editing: {{ original }}</h6>{% endif %}
-      {% if add %}<h6 class="text-muted">Create a new : {{ adminform.form|dir }}</h6>{% endif %}
+      {% if change %}<h6 class="alert small alert-secondary">Editing: <u> "{{ original }}" </u> </h6>{% endif %}
+      {% if add %}<h6 class="alert small alert-success">Create a new : {{ adminform.model_admin.opts.model_name|capfirst }}</h6>{% endif %}
     </div>
 
     <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
@@ -132,27 +166,29 @@
         <input type="hidden" name="_to_field" value="{{ to_field }}">
       {% endif %}
 
+      <input type="hidden" name="_save" value="true" />
+
       {% if add %}
         <input type="hidden" name="_saveasnew" value="true">
-        <input type="hidden" name="_save" value="true">
-        <input type="hidden" name="_continue" value="{% url 'palette_admin:index' %}">
-      {% endif %}
-
-      {% if change %}
-        <input type="hidden" name="_save" value="true">
+      {% elif change %}
         <input type="hidden" name="id" value="{{ object.id }}">
       {% endif %}
+      
+      {% if save_and_continue %}
+        <input type="hidden" name="_continue" value="{% url 'palette_admin:opts.app_label/opts.model_name' %}">
+      {% endif %}
+
 
       <div class="row">
         <div class="col-lg-12">
           {% for fieldset in adminform %}
-            <fieldset class="mb-4 border rounded p-3 bg-white">
+            <fieldset class="mb-4 border rounded p-3" style="background-color: var(--card-bg); border-color: var(--card-border);">
               {% if fieldset.name %}
                 <legend class="h5 border-bottom pb-2 mb-3">{{ fieldset.label }}</legend>
               {% endif %}
 
               {% if fieldset.description %}
-                <p class="text-muted">{{ fieldset.description|safe }}</p>
+                <p>{{ fieldset.description|safe }}</p>
               {% endif %}
 
               <div class="mb-3 row">
@@ -180,7 +216,7 @@
                           </select>
                       {% elif field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
                         <div class="custom-multiselect">
-                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 form-control">
+                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" value="{{field.field.value|default:''}}" class="select2 multiple form-control">
                             {% for option in field.field.field.choices %}
                               <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
                                 {{ option.1 }}
@@ -211,33 +247,39 @@
                           </div>
                         </div>
                       {% elif field|widget_type == "admintextarea" %}
-                        <textarea name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4">{% if field.value %} {{ field.value }} {% else %} {% endif %}</textarea>
+                        <textarea name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4">{{ field.field.value|default:'' }}</textarea>
                       {% elif field|widget_type == "checkbox" %}
-                        <div class="form-check">
-                          <input type="checkbox" name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-check-input" {% if field.value %}checked{% endif %}>
+                        <div class="form-check form-switch">
+                          <input type="checkbox" name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-check-input" value="on" {% if field.field.value %}checked{% endif %}>
                           <label class="form-check-label" for="{{ field.field.id_for_label }}">{{ field.label_tag }}</label>
                         </div>
                       {% elif field|widget_type == "adminemailinput" %}
-                        <input type="email" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control" id="{{ field.field.id_for_label }}">
+                        <input type="email" name="{{ field.field.html_name }}" value="{{ field.field.value|default:'' }}" class="form-control" id="{{ field.field.id_for_label }}">
                       {% elif field|widget_type == "adminsplitdatetime" %}
-                        <input type="datetime-local" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control" id="{{ field.field.id_for_label }}">
+                        {% if field.field.value %}
+                          {% with datetime_val=field.field.value %}
+                            <input type="datetime-local" name="{{ field.field.html_name }}" value="{{ datetime_val|date:'Y-m-d\\TH:i' }}" class="form-control" id="{{ field.field.id_for_label }}">
+                          {% endwith %}
+                        {% else %}
+                          <input type="datetime-local" name="{{ field.field.html_name }}" class="form-control" id="{{ field.field.id_for_label }}">
+                        {% endif %}
                       {% elif field|widget_type == "adminurlfield" %}
-                        <input type="url" name="{{ field.field.html_name }}" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
+                        <input type="url" name="{{ field.field.html_name }}" value="{{ field.field.value|default:'' }}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
                       {% elif field|widget_type == "admintextinput" and field.field.name == 'password' %}
-                        <input type="password" name="{{ field.field.html_name }}" disabled="true" value="{% if field.value %} {{ field.value }} {% else %} {% endif %}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
+                        <input type="password" name="{{ field.field.html_name }}" disabled="true" value="{{ field.field.value|default:''}}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
                         <p class="small"> To change the password, use this "form" </p>
                       {% elif field|widget_type == "admintextinput" %}
-                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value }}" />
+                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% elif field|widget_type == "adminuuidinput" %}
-                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value }}" />
+                        <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% else %}
-                        {% comment %} {{ field.field  }} {% endcomment %}
+                        <div> {{ field.field  }} </div>
                         {% comment %} <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control" rows="4">{{ field.field.widget_type }}</textarea> {% endcomment %}
                         {% comment %} <input type="text" name="{{ field.html_name }}" value="{{ field|dir }}" class="form-control" id="{{ field.id_for_label }}"> {% endcomment %}
                       {% endif %}
 
                       {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                        <small class="form-text">{{ field.help_text|safe }}</small>
                       {% endif %}
                       {% if field.errors %}
                         <div class="text-danger px-0 small">{{ errors|first }}</div>
@@ -254,20 +296,18 @@
       </div>
 
       {% block submit_buttons_bottom %}
-      <div class="d-flex justify-content-between sticky-bottom bg-light border-top py-3 px-4 mt-5">
-        <div>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save"></i> Save
-          </button>
-          <button type="submit" class="btn btn-secondary">
-            <i class="bi bi-save"></i> Save and add another
-          </button>
-          {% if show_delete_link %}
-            <a href="{{ delete_url }}" class="btn btn-danger ms-2">
-              <i class="bi bi-trash"></i> Delete
-            </a>
-          {% endif %}
-        </div>
+      <div class="d-flex gap-3 flex-wrap position-sticky sticky-bottom border-top py-3 px-4 mt-5" style="background-color: var(--card-bg); border-color: var(--card-border);">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-download"></i> Save Changes
+        </button>
+        <button type="submit" class="btn btn-secondary">
+          <i class="bi bi-plus-circle"></i> Save and add another
+        </button>
+        {% if change %}
+          <a href="{{ delete_url }}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete
+          </a>
+        {% endif %}
       </div>
       {% endblock %}
     </form>

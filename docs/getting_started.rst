@@ -37,7 +37,8 @@ Ready to get started? Check out:
 2. :doc:`quick_start` - Get it working in 5 minutes
 3. :doc:`features` - Explore all features
 4. :doc:`template_tags` - Learn the custom template tags
-5. :doc:`components` - Build custom components
+5. :doc:`examples` - Full Example on how to use Django Palette
+6. :doc:`components` - Build custom components
 
 Key Concepts
 ============
@@ -112,4 +113,4 @@ Need Help?
 - Read :doc:`quick_start` for a 5-minute setup
 - Check :doc:`template_tags` for tag documentation
 - See :doc:`examples` for code examples
-- Open an issue on `GitHub <https://github.com/ogofe/django-palette/issues>`_
+- Open an issue on `GitHub <https://github.com/ogofe/dj_palette/issues>`_

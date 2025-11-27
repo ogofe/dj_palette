@@ -1,7 +1,7 @@
 {% load palette humanize i18n %}
 
 {% palette_component card %}
-<div class="card shadow-sm border-0" {{ onclick|safe }}>
+<div class="card shadow-sm border-0">
   <div class="card-header">
   {% palette_block card_header %}
     <h6 class="card-title text-muted">{{ title|default:"Card Title" }}</h6>
@@ -26,7 +26,7 @@
 
 
 {% palette_component admin_card %}
-<div class="card shadow-sm border-0" onclick="{{ onclick|safe }}">
+<div class="card shadow-sm border-0">
   <div class="card-header">
   {% palette_block card_header %}
     <h6 class="card-title text-muted">{{ title|default:"Admin Card Title" }}</h6>

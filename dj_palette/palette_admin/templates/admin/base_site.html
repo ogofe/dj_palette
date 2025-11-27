@@ -1,115 +1,9 @@
 {% extends "admin/base.html" %}
 {% load i18n static palette humanize palette_admin %}
+
+
 {% block extrastyle %}
-<style>
-  body {
-    font-size: 0.95rem;
-    background-color: #f8f9fa;
-  }
-
-  .body-content .sidebar {
-    width: 300px;
-    position: fixed;
-    min-height: 100vh;
-    transition: all 0.3s ease;
-    background-color: #ffffff;
-    border-right: 1px solid #dee2e6;
-  }
-
-  .sidebar .nav-link {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .body-content .main-content {
-    width: calc(100% - 300px);
-    margin-left: 300px;
-    transition: all 0.3s ease;
-  }
-
-  .sidebar-toggle {
-    background: none;
-    border: none;
-    color: #212529;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s ease;
-  }
-
-  .sidebar-toggle:hover {
-    color: #0d6efd;
-  }
-
-  .topbar {
-    height: 60px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-  }
-  .account-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-  }
-  .account-chip img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-  }
-  @media (max-width: 900px) {
-    .sidebar {
-      width: 300px;
-      height: 100vh;
-      overflow-x: hidden;
-      position: fixed;
-      top: 0;
-      z-index: 1030;
-      left: -350px;
-    }
-    .sidebar.open {
-      transition: width 0.3s ease-in-out;
-      width: 300px;
-      left: 0;
-    }
-
-    .sidebar:hover {
-      width: 300px;
-    }
-    .sidebar ~ .main-content {
-      margin-left: 0;
-    }
-
-    .sidebar-toggle {
-      display: flex;
-    }
-  }
-
-  .sidebar-add-btn {
-    width: 62px;
-  }
-
-  .chip{
-    background: grey;
-    padding: 5px 5px;
-    min-width: 100px;
-    color: #fff;
-    text-transform: capitalize;
-    border-radius: 30px;
-  }
-</style>
-{% endblock %}
+{% endblock extrastyle %}
 
 {% block body %}
 <div class="body-content d-flex">
@@ -135,13 +29,13 @@
     {% with app_list=available_apps %}
       {% for app in app_list %}
         <div>
-            <a href="{{ app.app_url }}" class="gap-2 text-decoration-none d-flex fw-bold bg-secondary text-white p-2 m-0">
+            <a href="{{ app.app_url }}" class="gap-2 text-decoration-none d-flex fw-bold bg-dark text-white p-2 m-0">
               <i class="icon {{ app|app_icon_class }}"></i>
               <span class="small"> {{ app.name }} </span>
             </a>
             <div class="nav flex-column mb-2 p-2 gap-3">
             {% for model in app.models %}
-                <div class="nav-item px-2 bg-light rounded-0 d-flex align-items-center justify-content-between">
+                <div class="nav-item px-2 rounded-0 d-flex align-items-center justify-content-between">
                     <a href="{{ model.admin_url }}" class="nav-link d-flex justify-content-between align-items-center {% if model.admin_url in request.path %}active{% endif %}">
                     <span><i class="icon {{ model|model_icon_class:app.app_label}} me-2"></i>{{ model.name }}</span>
                     {% if model.add_url %}
@@ -167,20 +61,30 @@
         <h5 class="mb-0">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</h5>
       </div>
 
-      <div class="dropdown chip">
-        <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="User">
-          <span>{{ user.get_full_name|default:user.username }}</span>
+      <div class="d-flex align-items-center gap-3">
+        <!-- Dark Mode Toggle -->
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <div class="theme-toggle-icon">
+            <i class="bi bi-brightness-high"></i>
+          </div>
+        </button>
+
+        <!-- User Chip -->
+        <div class="dropdown chip">
+          <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="User">
+            <span>{{ user.get_full_name|default:user.username }}</span>
+          </div>
+          <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
+            {% csrf_token %}
+          </form>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'admin:password_change' %}"><i class="bi bi-key"></i> Change Password</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button type="submit" form="logout" class="dropdown-item" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
+          </ul>
         </div>
-        <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
-          {% csrf_token %}
-        </form>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'admin:password_change' %}"><i class="bi bi-key"></i> Change Password</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><button type="submit" form="logout" class="dropdown-item" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
-        </ul>
       </div>
     </div>
     {% endblock topbar %}
@@ -196,6 +100,15 @@
     {% endblock back_button %}
     
     <div class="d-block">
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="alert alert-info small rounded-0 dismissible justify-content-between d-flex align-items-center "> 
+            <div class="alert-title"> {{ msg }}</div>
+            <button class="alert-close btn btn-sm btn-close"></button>
+          </div>
+        {% endfor %}      
+      {% endif %}
+
       {% block content %}
       {% endblock content %}
     </div>
@@ -208,9 +121,57 @@
     const sidebar = document.querySelector('.sidebar');
     const bodyContent = document.querySelector('.body-content');
     const sidebarToggle = document.getElementById('sidebarToggle');
+    const themeToggle = document.getElementById('themeToggle');
     const SIDEBAR_STATE_KEY = 'sidebarCollapsed';
+    const THEME_STATE_KEY = 'darkMode';
 
     window.sidebar = sidebar;
+
+    // ===== DARK MODE FUNCTIONALITY =====
+    
+    // Initialize dark mode from localStorage or system preference
+    function initializeDarkMode() {
+      const savedTheme = localStorage.getItem(THEME_STATE_KEY);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme !== null) {
+        // Use saved preference
+        const isDarkMode = savedTheme === 'true';
+        setDarkMode(isDarkMode);
+      } else if (prefersDark) {
+        // Use system preference
+        setDarkMode(true);
+      }
+    }
+
+    function setDarkMode(isDark) {
+      const html = document.documentElement;
+      
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+        html.setAttribute('data-bs-theme', 'dark');
+        themeToggle.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        html.removeAttribute('data-bs-theme');
+        themeToggle.classList.remove('dark');
+      }
+      
+      localStorage.setItem(THEME_STATE_KEY, isDark);
+    }
+
+    function toggleDarkMode() {
+      const isDarkMode = document.body.classList.contains('dark-mode');
+      setDarkMode(!isDarkMode);
+    }
+
+    // Dark mode toggle button click handler
+    themeToggle.addEventListener('click', toggleDarkMode);
+
+    // Initialize dark mode on page load
+    initializeDarkMode();
+
+    // ===== SIDEBAR FUNCTIONALITY =====
 
     // Check if sidebar was previously collapsed
     const isSidebarCollapsed = sidebar.classList.contains('collapsed');
