@@ -1,4 +1,4 @@
-# 🎨 django-palette
+# 🎨 django-palette [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/dj_palette/)
 
 <p align="center">
   <img src="logo.jpg" alt="Django Palette Logo" width="200">
