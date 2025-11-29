@@ -48,6 +48,9 @@ class PaletteModelAdmin(admin.ModelAdmin):
     grid_display = ("__str__",)
     grid_display_links = ("__str__", )
     detail_view_template = None
+    delete_selected_confirmation_template = "admin/delete_confirmation.html"
+    delete_confirmation_template = "admin/delete_confirmation.html"
+    list_per_page = 15
 
 
     def get_urls(self):
@@ -109,7 +112,7 @@ class PaletteModelAdmin(admin.ModelAdmin):
         )
 
     def detail_view(self, request, **kwargs):
-        return 
+        return  #self.delete_queryset
 
 
     def get_search_fields(self, request):
@@ -133,10 +136,12 @@ class PaletteModelAdmin(admin.ModelAdmin):
         
         return valid_search_fields
 
+
     def get_changelist(self, request, **kwargs):
         from dj_palette.palette_admin.views import PaletteChangList
         return PaletteChangList
     
+
     def get_changelist_instance(self, request):
         """
         Return a `ChangeList` instance based on `request`. May raise
@@ -169,7 +174,6 @@ class PaletteModelAdmin(admin.ModelAdmin):
             grid_display,
             grid_display_links,
         )
-
     
     
     @csrf_protect_m
@@ -358,10 +362,6 @@ class PaletteModelAdmin(admin.ModelAdmin):
 
     
     def _changeform_view(self, request, object_id, form_url, extra_context):
-        if request.method == "POST":
-            # c5e536d0-8a26-4b08-b3d7-86414b9b7a9c
-            print("Form Submission!")
-
         to_field = request.POST.get(TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR))
         if to_field and not self.to_field_allowed(request, to_field):
             raise DisallowedModelAdminToField(
@@ -399,6 +399,8 @@ class PaletteModelAdmin(admin.ModelAdmin):
             request, obj, change=not add, fields=flatten_fieldsets(fieldsets)
         )
         if request.method == "POST":
+            files = request.FILES
+            post_data = request.POST
             # raise Exception("Hello Form Submission!")
             form = ModelForm(request.POST, request.FILES, instance=obj)
             formsets, inline_instances = self._create_formsets(
@@ -426,8 +428,6 @@ class PaletteModelAdmin(admin.ModelAdmin):
             else:
                 form_validated = False
         else:
-            print("Hello Form Submission!")
-
             if add:
                 initial = self.get_changeform_initial_data(request)
                 form = ModelForm(initial=initial)

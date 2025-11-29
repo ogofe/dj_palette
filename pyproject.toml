@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dj_palette"
-version = "1.0.1.0"
+version = "1.0.2.0"
 authors = [
   { name="Joel O. Tanko", email="7thogofe@gmail.com" },
 ]
@@ -39,12 +39,10 @@ license = { text = "MIT" }
 
 [project.urls]
 Homepage = "https://github.com/ogofe/dj_palette"
-Documentation = "https://django-palette.readthedocs.io"
+Documentation = "https://dj-palette.readthedocs.io"
 Issues = "https://github.com/ogofe/dj_palette/issues"
 Repository = "https://github.com/ogofe/dj_palette"
 
-[tool.setuptools]
-packages = ["dj_palette"]
 
 [tool.setuptools.package-data]
 dj_palette = [
@@ -57,3 +55,9 @@ dj_palette = [
     "palette_admin/static/**/*",
     "palette_admin/migrations/**/*.py",
 ]
+
+[project.optional-dependencies]
+# Logo for documentation
+
+[tool.setuptools]
+include-package-data = true

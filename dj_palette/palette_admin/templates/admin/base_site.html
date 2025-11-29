@@ -102,10 +102,39 @@
     <div class="d-block">
       {% if messages %}
         {% for msg in messages %}
-          <div class="alert alert-info small rounded-0 dismissible justify-content-between d-flex align-items-center "> 
-            <div class="alert-title"> {{ msg }}</div>
-            <button class="alert-close btn btn-sm btn-close"></button>
-          </div>
+          {% if msg.level_tag == 'success' %}
+            <div class="alert alert-success alert-message alert-dismissible fade show" role="alert">
+              <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-check-circle-fill alert-icon"></i>
+                <div class="flex-grow-1">{{ msg }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          {% elif msg.level_tag == 'error' %}
+            <div class="alert alert-danger alert-message alert-dismissible fade show" role="alert">
+              <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-exclamation-circle-fill alert-icon"></i>
+                <div class="flex-grow-1">{{ msg }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          {% elif msg.level_tag == 'warning' %}
+            <div class="alert alert-warning alert-message alert-dismissible fade show" role="alert">
+              <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+                <div class="flex-grow-1">{{ msg }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          {% else %}
+            <div class="alert alert-info alert-message alert-dismissible fade show" role="alert">
+              <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-info-circle-fill alert-icon"></i>
+                <div class="flex-grow-1">{{ msg }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          {% endif %}
         {% endfor %}      
       {% endif %}
 

@@ -21,6 +21,7 @@ build/
 # Development-only folders (local development)
 project/
 core/
+uploads/
 manage.py
 
 # Development files (AI generated docs)
@@ -58,3 +59,5 @@ build/
 
 # Documentation
 docs/_build/
+
+response.json

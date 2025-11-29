@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="dj-palette",
-    version="1.0.1.0",
+    version="1.0.2.0",
     description="A Django admin system with tools for building custom admin interfaces and reusable components",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
@@ -10,7 +10,7 @@ setup(
     author_email="7thogofe@gmail.com",
     url="https://github.com/ogofe/dj_palette",
     project_urls={
-        "Documentation": "https://django-palette.readthedocs.io",
+        "Documentation": "https://dj-palette.readthedocs.io",
         "Issues": "https://github.com/ogofe/dj_palette/issues",
         "Repository": "https://github.com/ogofe/dj_palette",
     },
@@ -27,6 +27,7 @@ setup(
             'palette_admin/static/**/*',
             'palette_admin/migrations/**/*.py',
         ],
+        '': ['logo.jpg'],
     },
     install_requires=[
         "Django>=2.2",

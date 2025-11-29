@@ -5,25 +5,68 @@
 {% block extrastyle %}
   {{ block.super }}
   <style>
+    /* Related Widget Wrapper */
+    .related-widget-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    .related-widget-wrapper select {
+      flex: 1;
+    }
+
+    .related-widget-wrapper-link {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      background-color: #0d6efd;
+      color: white;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      margin-top: 0.25rem;
+    }
+
+    .related-widget-wrapper-link:hover {
+      background-color: #0b5ed7;
+      box-shadow: 0 0.25rem 0.5rem rgba(13, 110, 253, 0.3);
+    }
+
+    body.dark-mode .related-widget-wrapper-link {
+      background-color: #0d6efd;
+    }
+
+    body.dark-mode .related-widget-wrapper-link:hover {
+      background-color: #0b5ed7;
+    }
+
     .dj-palette-file-upload-zone {
-      border: 2px dashed #dee2e6;
+      border: 2px dashed var(--card-border);
       border-radius: 0.375rem;
       padding: 2rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      background-color: #f8f9fa;
+      background-color: var(--bs-bg-light);
     }
 
     .dj-palette-file-upload-zone:hover {
       border-color: #0d6efd;
-      background-color: #f0f7ff;
+      background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    body.dark-mode .dj-palette-file-upload-zone:hover {
+      background-color: rgba(13, 110, 253, 0.1);
     }
 
     .dj-palette-file-upload-zone.dragover {
       border-color: #0d6efd;
-      background-color: #e7f1ff;
-      box-shadow: 0 0 10px rgba(13, 110, 253, 0.25);
+      background-color: rgba(13, 110, 253, 0.15);
+      box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
     }
 
     .dj-palette-file-upload-content i {
@@ -34,7 +77,7 @@
     }
 
     .dj-palette-file-upload-content p {
-      color: #6c757d;
+      color: var(--text-muted);
       margin: 0;
       font-size: 0.95rem;
     }
@@ -53,11 +96,12 @@
       position: relative;
       border-radius: 0.375rem;
       overflow: hidden;
-      background-color: #f8f9fa;
+      background-color: var(--bs-bg-light);
       padding: 0.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      border: 1px solid var(--card-border);
     }
 
     .preview-item img {
@@ -73,13 +117,13 @@
 
     .file-item i {
       font-size: 2rem;
-      color: #6c757d;
+      color: var(--text-muted);
       display: block;
       margin-bottom: 0.5rem;
     }
 
     .file-item p {
-      color: #6c757d;
+      color: var(--text-muted);
       font-size: 0.85rem;
       word-break: break-word;
       margin: 0;
@@ -155,11 +199,24 @@
       {% if add %}<h6 class="alert small alert-success">Create a new : {{ adminform.model_admin.opts.model_name|capfirst }}</h6>{% endif %}
     </div>
 
-    <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
 
       {% if is_popup %}
         <input type="hidden" name="_popup" value="1">
+        <script type="text/javascript">
+          // Handle popup mode - notify parent window when item is created
+          window.addEventListener('beforeunload', function() {
+            if (window.opener && window.opener.dismissAddRelatedModal) {
+              // Get the saved object ID and label from the form
+              const objectId = document.querySelector('input[name="id"]')?.value || '{{ object.id }}';
+              const objectLabel = '{{ original|escapejs }}' || 'New Item';
+              if (objectId) {
+                window.opener.dismissAddRelatedModal(objectId, objectLabel);
+              }
+            }
+          });
+        </script>
       {% endif %}
 
       {% if to_field %}
@@ -206,7 +263,7 @@
                         {% if field.field.is_required %}<span class="text-danger">*</span>{% endif %}
                       </label>
 
-                      {% if field|widget_type == 'relatedfieldwidgetwrapper' and not field|is_multiple_select %}
+                      {% comment %} {% if field|widget_type == 'relatedfieldwidgetwrapper' and not field|is_multiple_select %}
                           <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 form-control">
                             {% for option in field.field.field.choices %}
                               <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
@@ -215,16 +272,21 @@
                             {% endfor %}
                           </select>
                       {% elif field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
-                        <div class="custom-multiselect">
-                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" value="{{field.field.value|default:''}}" class="select2 multiple form-control">
+                        <div class="related-widget-wrapper" data-model-ref="{{ field.field.rel.model_name }}" data-field-id="{{ field.id_for_label }}">
+                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 multiple form-control">
                             {% for option in field.field.field.choices %}
                               <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
                                 {{ option.1 }}
                               </option>
                             {% endfor %}
                           </select>
-                        </div>
-                      {% elif field|widget_type == "adminfile" %}
+                          {% if field.field.rel %}
+                            <button type="button" class="related-widget-wrapper-link add-related-modal" data-model="{{ field.field.rel.model_name }}" data-field-id="{{ field.id_for_label }}" title="Add another {{ field.field.rel.model_name|title }}">
+                              <i class="bi bi-plus-circle"></i> Add
+                            </button>
+                          {% endif %}
+                        </div> {% endcomment %}
+                      {% if field|widget_type == "adminfile" %}
                         <div class="dj-palette-file-upload-zone" id="dj-palette-dropzone-{{ field.field.id_for_label }}">
                           <div class="dj-palette-file-upload-content">
                             <i class="bi bi-cloud-arrow-up"></i>
@@ -232,16 +294,18 @@
                             <input type="file" name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="dj-palette-file-input-hidden" {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}>
                           </div>
                           <div class="dj-palette-file-preview mt-3" id="preview-{{ field.id_for_label }}">
-                            {% if field.value %}
+                            {% if field.field.value %}
                               <div class="preview-item">
-                                {% if "image" in field.field.widget.attrs.accept|default:"" or field.value|lower|slice:"-4:" in ".jpg,.png,.gif,.webp" %}
-                                  <img src="{{ field.value.url }}" alt="Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                                {% else %}
-                                  <div class="file-item">
-                                    <i class="bi bi-file-earmark"></i>
-                                    <p>{{ field.value.name }}</p>
-                                  </div>
-                                {% endif %}
+                                {% with file_name=field.field.value.name|lower %}
+                                  {% if file_name|slice:"-4:" in ".jpg,.png,.gif,.webp" or file_name|slice:"-5:" in ".jpeg" %}
+                                    <img src="{{ MEDIA_URL}}{{ field.field.value.url }}" alt="Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                  {% else %}
+                                    <div class="file-item">
+                                      <i class="bi bi-file-earmark"></i>
+                                      <p>{{ field.field.value.name }}</p>
+                                    </div>
+                                  {% endif %}
+                                {% endwith %}
                               </div>
                             {% endif %}
                           </div>
@@ -274,8 +338,6 @@
                         <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% else %}
                         <div> {{ field.field  }} </div>
-                        {% comment %} <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control" rows="4">{{ field.field.widget_type }}</textarea> {% endcomment %}
-                        {% comment %} <input type="text" name="{{ field.html_name }}" value="{{ field|dir }}" class="form-control" id="{{ field.id_for_label }}"> {% endcomment %}
                       {% endif %}
 
                       {% if field.help_text %}
@@ -312,13 +374,75 @@
       {% endblock %}
     </form>
   </div>
+
+  <!-- Add Related Modal -->
+  <div class="modal fade" id="addRelatedModal" tabindex="-1" aria-labelledby="addRelatedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title" id="addRelatedModalLabel">Add New Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <iframe id="relatedItemFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 
 {% block extra_scripts %}
   <script type="text/javascript">
     $(document).ready(function(){
-        $('.select2').select2();
+        // Initialize Select2 with current values
+        $('.select2').select2({
+          allowClear: true,
+          width: '100%'
+        });
+        
+        // Load current values for select2 fields
+        $('.select2').each(function() {
+          const currentValues = $(this).val();
+          if (currentValues) {
+            $(this).val(currentValues).trigger('change');
+          }
+        });
+        
+        // Get form and ensure values are synced before submission
+        const form = document.querySelector('form');
+        if (form) {
+          // Use native form submit event with capture phase
+          form.addEventListener('submit', function(e) {
+            console.log('Form submitting, syncing Select2 fields...');
+            
+            // For each Select2 field, ensure the underlying select element
+            // has the values that will be submitted
+            document.querySelectorAll('.select2').forEach(selectElement => {
+              const $select = $(selectElement);
+              
+              // Get the selected values from Select2
+              const selectedValues = $select.val() || [];
+              
+              console.log(`Field ${selectElement.name}: ${selectedValues}`);
+              
+              // Make sure the native select element has these values selected
+              Array.from(selectElement.options).forEach(option => {
+                option.selected = selectedValues.includes(option.value);
+              });
+            });
+            
+            // Log entire form data for debugging
+            const formData = new FormData(form);
+            console.log('Form Data being submitted:');
+            for (let [key, value] of formData.entries()) {
+              console.log(`  ${key}: ${value}`);
+            }
+          }, true); // Use capture phase to run early
+        }
 
         // File upload dropzone functionality
         const dropzones = document.querySelectorAll('.dj-palette-file-upload-zone');
@@ -327,9 +451,15 @@
           const fileInput = zone.querySelector('.dj-palette-file-input-hidden');
           const previewContainer = zone.querySelector('.dj-palette-file-preview');
 
-          console.log("File Input:", fileInput)
-          console.log("Preview Container:", previewContainer)
-          
+          // Make sure file input has proper name attribute
+          if (fileInput && fileInput.name) {
+            console.log(`File input found: ${fileInput.name}`);
+          } else {
+            console.warn('File input missing name attribute:', fileInput);
+          }
+
+          if (!fileInput) return;
+
           // Click to browse
           zone.addEventListener('click', () => fileInput.click());
           
@@ -366,7 +496,10 @@
         
         function updatePreview(fileInput, previewContainer) {
           const files = fileInput.files;
-          previewContainer.innerHTML = '';
+          // Only clear existing previews if new files are being added
+          if (files.length > 0) {
+            previewContainer.innerHTML = '';
+          }
           
           if (files.length === 0) return;
           
@@ -399,6 +532,52 @@
             
             previewContainer.appendChild(previewItem);
           });
+        }
+        
+        // Handle Add Related Modal
+        const addRelatedModal = document.getElementById('addRelatedModal');
+        if (addRelatedModal) {
+          const modal = new bootstrap.Modal(addRelatedModal);
+          const modalFrame = document.getElementById('relatedItemFrame');
+          const modalTitle = document.getElementById('addRelatedModalLabel');
+          
+          document.querySelectorAll('.add-related-modal').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              const modelName = this.dataset.model;
+              const fieldId = this.dataset.fieldId;
+              const addUrl = `/admin/core/${modelName}/add/?_to_field=id&_popup=1`;
+              
+              // Set iframe src and modal title
+              modalTitle.textContent = `Add New ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}`;
+              modalFrame.src = addUrl;
+              
+              // Store field ID for later use
+              modalFrame.dataset.fieldId = fieldId;
+              
+              // Show modal
+              modal.show();
+            });
+          });
+          
+          // Handle popup responses from iframe
+          window.dismissAddRelatedModal = function(newId, newLabel) {
+            const fieldId = modalFrame.dataset.fieldId;
+            const selectElement = document.getElementById(fieldId);
+            
+            // Add new option to select
+            const newOption = document.createElement('option');
+            newOption.value = newId;
+            newOption.text = newLabel;
+            newOption.selected = true;
+            selectElement.appendChild(newOption);
+            
+            // Trigger select2 to refresh
+            $(selectElement).val($(selectElement).val()).trigger('change');
+            
+            // Close modal
+            modal.hide();
+          };
         }
       }
     );

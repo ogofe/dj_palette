@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n l10n static palette palette_admin admin_urls %}
 
 {% block title %}{% trans "Confirm deletion" %}{% endblock %}
 
@@ -7,17 +7,27 @@
   {{ block.super }}
   <style>
     .delete-confirmation-container {
+      background-color: var(--bs-bg-light);
+      padding: 2rem 0;
+      min-height: calc(100vh - 200px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-confirmation-wrapper {
       max-width: 600px;
-      margin: 2rem auto;
+      width: 100%;
       padding: 0 1.5rem;
     }
 
     .delete-confirmation-card {
-      background-color: white;
+      background-color: var(--card-bg);
       border: 2px solid #dc3545;
       border-radius: 0.5rem;
       padding: 2rem;
-      box-shadow: 0 0.25rem 0.5rem rgba(220, 53, 69, 0.2);
+      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.075);
+      color: var(--bs-body-color);
     }
 
     .delete-icon {
@@ -30,28 +40,40 @@
     .delete-confirmation-card h2 {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #212529;
+      color: var(--bs-body-color);
       text-align: center;
       margin-bottom: 1rem;
     }
 
     .delete-warning {
-      background-color: #fff5f5;
+      background-color: rgba(220, 53, 69, 0.1);
       border-left: 4px solid #dc3545;
       padding: 1rem;
       border-radius: 0.375rem;
       margin-bottom: 1.5rem;
-      color: #721c24;
+      color: #dc3545;
+    }
+
+    body.dark-mode .delete-warning {
+      background-color: rgba(220, 53, 69, 0.15);
+      color: #ff6b7a;
     }
 
     .delete-warning strong {
       display: block;
       margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .delete-warning p {
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
     }
 
     .delete-warning ul {
       margin: 0;
       padding-left: 1.5rem;
+      margin-top: 0.5rem;
     }
 
     .delete-warning li {
@@ -59,8 +81,8 @@
     }
 
     .object-list {
-      background-color: #f8f9fa;
-      border: 1px solid #dee2e6;
+      background-color: var(--bs-bg-light);
+      border: 1px solid var(--card-border);
       border-radius: 0.375rem;
       padding: 1rem;
       margin-bottom: 1.5rem;
@@ -69,7 +91,7 @@
     .object-list h3 {
       font-size: 0.95rem;
       font-weight: 700;
-      color: #212529;
+      color: var(--bs-body-color);
       margin: 0 0 1rem 0;
     }
 
@@ -81,8 +103,9 @@
 
     .object-list li {
       padding: 0.5rem;
-      color: #495057;
-      border-bottom: 1px solid #e9ecef;
+      color: var(--bs-body-color);
+      border-bottom: 1px solid var(--card-border);
+      {% comment %} font-size: 0.95rem; {% endcomment %}
     }
 
     .object-list li:last-child {
@@ -99,13 +122,14 @@
     .confirmation-form {
       margin-top: 2rem;
       padding-top: 1.5rem;
-      border-top: 1px solid #dee2e6;
+      border-top: 1px solid var(--card-border);
     }
 
     .form-actions {
       display: flex;
       gap: 1rem;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     .form-actions button,
@@ -126,28 +150,60 @@
     .form-actions .btn-danger {
       background-color: #dc3545;
       color: white;
+      border: 1px solid #dc3545;
     }
 
     .form-actions .btn-danger:hover {
       background-color: #c82333;
+      border-color: #bd2130;
       transform: translateY(-1px);
-      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0.25rem 0.5rem rgba(220, 53, 69, 0.3);
+    }
+
+    .form-actions .btn-danger:active {
+      transform: translateY(0);
     }
 
     .form-actions .btn-secondary {
-      background-color: #6c757d;
-      color: white;
-      text-decoration: none;
+      background-color: var(--input-bg);
+      color: var(--bs-body-color);
+      border: 1px solid var(--input-border);
     }
 
     .form-actions .btn-secondary:hover {
-      background-color: #5a6268;
+      background-color: var(--bs-bg-light);
+      border-color: #0d6efd;
+      color: #0d6efd;
       transform: translateY(-1px);
-      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.075);
+    }
+
+    .form-actions .btn-secondary:active {
+      transform: translateY(0);
     }
 
     .form-hidden {
       display: none;
+    }
+
+    @media (max-width: 600px) {
+      .delete-confirmation-wrapper {
+        padding: 0 1rem;
+      }
+
+      .delete-confirmation-card {
+        padding: 1.5rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .form-actions button,
+      .form-actions a {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 {% endblock %}
@@ -158,64 +214,71 @@
 
 {% block content %}
 <div class="delete-confirmation-container">
-  <div class="delete-confirmation-card">
-    <div class="delete-icon">
-      <i class="bi bi-exclamation-triangle"></i>
-    </div>
-
-    <h2>{% trans "Confirm Deletion" %}</h2>
-
-    {% if protected_objects %}
-      <div class="delete-warning">
-        <strong>{% trans "Cannot delete this object because other objects depend on it:" %}</strong>
-        {% for related in protected_objects %}
-          <div>
-            <strong>{{ related.app_label }}.{{ related.model_name }}</strong>
-            <ul>
-              {% for obj in related.objects %}
-                <li>{{ obj }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-        {% endfor %}
+  <div class="delete-confirmation-wrapper">
+    <div class="delete-confirmation-card">
+      <div class="delete-icon">
+        <i class="bi bi-exclamation-triangle"></i>
       </div>
 
-      <div class="form-actions">
-        <a href="{{ back_url }}" class="btn-secondary">
-          <i class="bi bi-arrow-left"></i> {% trans "Back" %}
-        </a>
-      </div>
-    {% else %}
-      <div class="delete-warning">
-        <strong>{% trans "Are you sure?" %}</strong>
-        <p>{% trans "This action cannot be undone. Please confirm that you want to delete the following object(s):" %}</p>
-      </div>
+      <h2>{% trans "Confirm Deletion" %}</h2>
 
-      {% if deletion_count %}
-        <div class="object-list">
-          <h3>{% blocktranslate count counter=deletion_count %}{{ counter }} object{% plural %}{{ counter }} objects{% endblocktranslate %}</h3>
-          <ul>
-            {% for obj in deleted_objects %}
-              <li>{{ obj }}</li>
-            {% endfor %}
-          </ul>
+      {% if protected_objects %}
+        <div class="delete-warning">
+          <strong>{% trans "Cannot delete this object because other objects depend on it:" %}</strong>
+          {% for related in protected_objects %}
+            <div style="margin-top: 1rem;">
+              <strong>{{ related.app_label }}.{{ related.model_name }}</strong>
+              <ul>
+                {% for obj in related.objects %}
+                  <li>{{ obj }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endfor %}
         </div>
-      {% endif %}
-
-      <form method="post" id="delete-form" class="confirmation-form">
-        {% csrf_token %}
-        <input type="hidden" name="post" value="yes">
 
         <div class="form-actions">
-          <button type="submit" class="btn-danger" name="delete-confirm">
-            <i class="bi bi-check-circle"></i> {% trans "Confirm Deletion" %}
-          </button>
           <a href="{{ back_url }}" class="btn-secondary">
-            <i class="bi bi-x-circle"></i> {% trans "Cancel" %}
+            <i class="bi bi-arrow-left"></i> {% trans "Back" %}
           </a>
         </div>
-      </form>
-    {% endif %}
+      {% else %}
+        <div class="delete-warning">
+          <strong>{% trans "Are you sure?" %}</strong>
+          <p>{% trans "This action cannot be undone. Please confirm that you want to delete the following object(s):" %}</p>
+        </div>
+
+        {% for deletable_object in deletable_objects %}
+          <div class="object-list">
+            {% if deletable_object %}
+              <ul class="small">
+                {% for object in deletable_object %}
+                  <li class="">{{ forloop.counter }} - {{ object }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <form method="post" id="delete-form" class="confirmation-form">
+          {% csrf_token %}
+          <input type="hidden" name="post" value="yes">
+          {% for obj in queryset %}
+          <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}">
+          {% endfor %}
+          <input type="hidden" name="action" value="delete_selected">
+
+          <div class="form-actions">
+            <button type="submit" class="btn-danger" name="delete-confirm">
+              <i class="bi bi-check-circle"></i> {% trans "Confirm Deletion" %}
+            </button>
+            <a href="{{ back_url }}" class="btn-secondary">
+              <i class="bi bi-x-circle"></i> {% trans "Cancel" %}
+            </a>
+          </div>
+        </form>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

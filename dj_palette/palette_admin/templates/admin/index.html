@@ -4,9 +4,14 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-  <div class="p-3">
-    <h2>Good {{ greeting }}, {{ user.get_full_name|default:user.username|title }}</h2>
-    <p>Welcome to your admin dashboard.</p>
+  <div class="p-3 border-bottom mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+      <div>
+        <h2>Good {{ greeting }}, {{ user.get_full_name|default:user.username|title }}</h2>
+        <p>Welcome to your admin dashboard.</p>
+      </div>
+      <a target="_new" class="btn btn-sm rounded-pill btn-outline-secondary ml-auto" href="{{ site_url }}"> View main Site <i class="bi bi-box-arrow-up-right"></i> </a>
+    </div>
   </div>
 
   <div class="row mx-0 mb-4">

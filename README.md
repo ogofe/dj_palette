@@ -51,19 +51,18 @@ INSTALLED_APPS = [
 ]
 ```
 
-### 2. Configure Admin URL
+### 2. Configure The Palette Admin URL
 
 In your `urls.py`:
 
 ```python
 from django.contrib import admin
 from django.urls import path
+from dj_palette.palette_admin.site import palette_admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    # or use the custom palette admin site:
-    # from dj_palette.palette_admin.site import palette_admin_site
-    # path('admin/', palette_admin_site.urls),
+    path('admin/', palette_admin_site.urls), # use the palette_admin
+    # path('admin/', admin.site.urls),
 ]
 ```
 
@@ -90,10 +89,10 @@ Define a component with named blocks that can be overridden:
 ```django
 {% load palette %}
 
-{% palette_component "admin_card" %}
+{% palette_component admin_card %}
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      {% palette_block "card_content" %}
+      {% palette_block card_content %}
         <h5 class="card-title">{{ title }}</h5>
         <p class="card-text">{{ content }}</p>
       {% endpalette_block %}
@@ -109,7 +108,7 @@ Render the component and pass context variables:
 ```django
 {% load palette %}
 
-{% palette_ui "admin_card" with title="Total Users" content="1,234" %}
+{% palette_ui file="components/cards.html" component="admin_card" with title="Total Users" content="1,234" %}{% endpalette_ui %}
 ```
 
 ### `palette_override` - Override Component Blocks
@@ -119,8 +118,8 @@ Override specific blocks when rendering a component:
 ```django
 {% load palette %}
 
-{% palette_ui "admin_card" with title="Active Users" %}
-  {% palette_override "card_content" %}
+{% palette_ui file="components/cards.html" component="admin_card" with title="Active Users" %}
+  {% palette_override card_content %}
     <h5 class="card-title">Active Users</h5>
     <p class="card-text">{{ active_count }}</p>
     <small class="text-muted">Last updated: {{ last_updated }}</small>
@@ -133,7 +132,7 @@ Override specific blocks when rendering a component:
 Create named blocks within components for customization:
 
 ```django
-{% palette_block "footer" %}
+{% palette_block footer %}
   <div class="card-footer text-muted">
     {{ footer_text|default:"No additional info" }}
   </div>
@@ -191,14 +190,14 @@ Create a file `templates/components/stat_card.html`:
 ```django
 {% load palette %}
 
-{% palette_component "stat_card" %}
+{% palette_component stat_card %}
   <div class="card stat-card border-0 shadow-sm">
     <div class="card-body text-center">
       {% palette_block "stat_number" %}
         <h2 class="display-4 text-primary">{{ number }}</h2>
       {% endpalette_block %}
       
-      {% palette_block "stat_label" %}
+      {% palette_block stat_label %}
         <p class="text-muted">{{ label }}</p>
       {% endpalette_block %}
     </div>
@@ -320,8 +319,8 @@ See LICENSE file for details.
 ## 📚 Documentation & Links
 
 - **GitHub**: [https://github.com/ogofe/django-palette](https://github.com/ogofe/dj_palette)
-- **PyPI**: [https://pypi.org/project/dj-palette/](https://pypi.org/project/dj_palette/)
-- **Documentation**: [https://django-palette.readthedocs.io](https://django-palette.readthedocs.io)
+- **PyPI**: [https://pypi.org/project/dj-palette/](https://pypi.org/project/dj-palette/)
+- **Documentation**: [https://django-palette.readthedocs.io](https://dj-palette.readthedocs.io)
 - **Issues**: [https://github.com/ogofe/django-palette/issues](https://github.com/ogofe/dj_palette/issues)
 
 ---
@@ -329,7 +328,7 @@ See LICENSE file for details.
 ## 🚀 Getting Help
 
 - **Found a bug?** Open an issue on [GitHub](https://github.com/ogofe/dj_palette/issues)
-- **Have a question?** Check the [documentation](https://django-palette.readthedocs.io)
+- **Have a question?** Check the [documentation](https://dj-palette.readthedocs.io)
 - **Want to chat?** Reach out via email: 7thogofe@gmail.com
 
 ---

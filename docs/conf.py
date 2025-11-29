@@ -13,10 +13,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 project = "django-palette"
 copyright = "2025, Joel O. Tanko"
 author = "Joel O. Tanko"
-release = "1.0.0"
+release = "1.0.2.0"
 
 # The full version, including alpha/beta/rc tags
-version = "1.0.0"
+version = "1.0.2.0"
 
 # -- General configuration ------------------------------------------------
 extensions = [

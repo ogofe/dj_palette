@@ -107,6 +107,7 @@
     padding: 0.5rem 1rem;
     background-color: #e7f1ff;
     border-radius: 0.375rem;
+    display: none;
   }
 
   .actions .hidden {
@@ -400,6 +401,24 @@
     min-width: 250px;
   }
 
+  /* Pagination Styling */
+  .btn-outline-secondary {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--bs-body-color);
+  }
+
+  .btn-outline-secondary:hover:not(:disabled) {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+  }
+
+  .btn-outline-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     .search-actions-container {
       flex-direction: column;
@@ -427,13 +446,13 @@
         <div class="col-sm-6 col-lg-7 my-1">
           <form id="searchbar" method="get" class="w-100">
             <div class="input-group">
-              <span class="input-group-text">
-                <i class="bi bi-search"></i>
+              <span class="input-group-text bg-light">
+                <i class="bi bi-search text-dark"></i>
               </span>
               <input type="text" name="q" value="{{ cl.query }}" placeholder="{% trans 'Search' %}" class="form-control" aria-label="{% trans 'Search' %}">
-              <button type="submit" class="btn btn-primary">{% trans 'Search' %}</button>
+              <button type="submit" class="btn btn-light">{% trans 'Search' %}</button>
               {% if cl.query %}
-                <a href="{{ request.path }}" class="btn btn-secondary">{% trans 'Clear' %}</a>
+                <a href="{{ request.path }}" class="btn btn-light bi bi-x-circle"></a>
               {% endif %}
             </div>
           </form>
@@ -459,8 +478,8 @@
                         {% endif %}
                       {% endfor %}
                     </select>
-                    <button type="submit" class="btn btn-primary" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
-                      {% trans "Go" %}
+                    <button type="submit" class="btn btn-outline-secondary" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                      {% trans "Submit" %}
                     </button>
                   </div>
                 {% endif %}
@@ -478,10 +497,10 @@
     <!-- View Toggle -->
     <div class="d-flex justify-content-between align-items-center flex-wrap-reverse gap-2 mb-3">
       <div class="view-toggle m-0">
-        <button class="view-btn active" data-view="grid" title="Grid View">
+        <button class="view-btn" data-view="grid" title="Grid View">
           <i class="bi bi-grid-3x3-gap"></i> Grid View
         </button>
-        <button class="view-btn" data-view="list" title="List View">
+        <button class="view-btn active" data-view="list" title="List View">
           <i class="bi bi-list-ul"></i> List View
         </button>
       </div>
@@ -492,21 +511,63 @@
     </div>
 
     {% if actions_selection_counter %}
-      <span class="action-counter d-block mb-4" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+      <span class="action-counter mb-4" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+    {% else %}
+      <span class="action-counter mb-4"></span>
     {% endif %}
 
   
 
     <!-- Grid View -->
-    <div class="grid-view active">
+    <div class="grid-view">
       {% if cl.result_list %}
+        <!-- Grid View Pagination Top -->
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            {% if cl.paginator and cl.paginator.num_pages > 1 %}
+            <nav aria-label="Grid view pagination" class="d-flex align-items-center gap-2">
+              {% with current_page=cl.page_num %}
+                {% if current_page > 1 %}
+                  <a href="?p={{ current_page|add:'-1' }}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Previous page' %}">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                {% else %}
+                  <button class="btn btn-sm btn-outline-secondary" disabled title="{% trans 'Previous page' %}">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                {% endif %}
+                
+                <span class="px-3" style="min-width: 60px; text-align: center;">
+                  <strong>{{ current_page }}</strong> / <strong>{{ cl.paginator.num_pages }}</strong>
+                </span>
+                
+                {% if current_page < cl.paginator.num_pages %}
+                  <a href="?p={{ current_page|add:'1' }}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Next page' %}">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                {% else %}
+                  <button class="btn btn-sm btn-outline-secondary" disabled title="{% trans 'Next page' %}">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                {% endif %}
+              {% endwith %}
+            </nav>
+            {% endif %}
+            
+            <div class="form-check">
+              <input type="checkbox" form="changelist-form" class="form-check-input grid-select-all" id="grid-select-all">
+              <label class="form-check-label" for="grid-select-all">
+                {% trans "Select all on this page" %}
+              </label>
+            </div>
+          </div>
+
         <div class="row">
           {% for item in cl.result_list %}
             <div class="col-sm-6 col-lg-4 mb-2">
               {% palette_ui file="palette/components/card.html" component="card" %}
                 {% palette_override card_header %}
                   <div class="d-flex align-items-center gap-2">
-                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select">
+                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select" form="changelist-form">
 
                     <h6> {{ results.opts.verbose_name|capfirst }} </h6>
                   </div>
@@ -517,13 +578,13 @@
                     {% for field_name in cl.grid_display %}
                       {% if field_name == '__str__' %}
                         <p class="mb-1">
-                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:10 }}
+                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:"7" }}
                         </p>
                       {% elif field_name == 'action_checkbox' %}
                       {% else %}
                         {% if field_name in cl.grid_display_links %}
                           <p class="mb-1">
-                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|getattr:field_name|truncatewords:10 }} </a>
+                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|getattr:field_name|truncatewords:"7" }} </a>
                           </p>
                         {% else %}
                           <p class="mb-1">
@@ -536,13 +597,13 @@
                     {% for field_name in cl.list_display %}
                       {% if field_name == '__str__' %}
                         <p class="mb-1">
-                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:10 }}
+                          <strong>{{ results.opts.verbose_name|capfirst }}:</strong> {{ item|truncatewords:"7" }}
                         </p>
                       {% elif field_name == 'action_checkbox' %}
                       {% else %}
                         {% if field_name in cl.grid_display_links %}
                           <p class="mb-1">
-                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|dir }} {{ item|getattr:field_name|truncatewords:10 }} </a>
+                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|dir }} {{ item|getattr:field_name|truncatewords:"7" }} </a>
                           </p>
                         {% else %}
                           <p class="mb-1">
@@ -560,21 +621,6 @@
                   <div class="d-flex gap-2">
                     <a href="{{ item.pk }}/change/" class="btn btn-sm btn-primary"> Edit </a>
                   </div>
-                  {% comment %} {% for field in action_form %}
-                    {% if field.label %}
-                      {% for action in field.subwidgets %}
-                        {% if "----" in action.choice_label  %}
-                        {% else %}
-                          {% with act_label=action.choice_label|action_label %}
-                            <button type="submit" class="btn btn-sm {% if act_label == 'delete' or 'Delete' %} btn-danger {% else %} btn-primary {% endif %}" form="changelist-form"> {{ act_label}} </button>
-                          {% endwith %}
-                        {% endif %}
-                      {% endfor %}
-                    {% else %}
-                      {{ field }}
-                    {% endif %}
-                  {% endfor %} {% endcomment %}
-
                 {% endpalette_override card_body %}
               {% endpalette_ui %}
             </div>
@@ -588,14 +634,14 @@
     </div>
     
     <!-- List View -->
-    <div class="list-view">
+    <div class="list-view active">
       {% if cl.result_list %}
         <div class="table-responsive">
-          <table class="table table-hover">
+          <table class="table table-hover text-nowrap">
             <thead>
               <tr>
                 <th class="item-checkbox">
-                  <input type="checkbox" id="action-toggle" class="action-toggle">
+                  <input type="checkbox" name="select_across" id="action-toggle" class="action-toggle" form="changelist-form">
                 </th>
 
                 {% for field_name in cl.list_display %}
@@ -606,23 +652,24 @@
                     <th>{% trans field_name|humanize_name %}</th>
                   {% endif %}
                 {% endfor %}
-                <th>{% trans "Actions" %}</th>
+                <th class="position-sticky sticky-right">{% trans "Actions" %}</th>
               </tr>
             </thead>
-            <tbody>
+
+            <tbody class="overflow-auto">
               {% for item in cl.result_list %}
                 <tr>
                   <td class="item-checkbox">
-                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select">
+                    <input type="checkbox" name="_selected_action" value="{{ item.pk }}" class="action-select" form="changelist-form">
                   </td>
                   {% for field_name in cl.list_display %}
                     {% if field_name == '__str__' %}
-                      <td> <a href="{{ item.get_admin_url }}{{item.pk}}/change/"> <strong>{{ item|capfirst }}</strong></a></td>
+                      <td> <a href="{{ item.get_admin_url }}{{item.pk}}/change/"> <strong>{{ item|capfirst|truncatewords:"7" }}</strong></a></td>
                     {% elif field_name == 'action_checkbox' %}
                     {% else %}
                       <td>
                        {% if field_name in cl.list_display_links %}
-                         <a class="link text-decoration-none text-primary font-weight-bold" href="{{ item.get_admin_url }}{{item.pk}}/change/"> {{ item|getattr:field_name|format_field_value }} </a>
+                         <a class="link text-decoration-none text-primary font-weight-bold" href="{{ item.get_admin_url }}{{item.pk}}/change/"> {{ item|getattr:field_name|format_field_value|truncatewords:"7" }} </a>
                        {% else %}
                          {{ item|getattr:field_name|format_field_value }}
                        {% endif %}
@@ -642,8 +689,43 @@
                 </tr>
               {% endfor %}
             </tbody>
+            
+            <!-- List View Pagination Footer -->
           </table>
         </div>
+
+        {% if cl.paginator and cl.paginator.num_pages > 1 %}
+        <div class="mt-3 d-flex justify-content-end">
+          <nav aria-label="List view pagination" class="d-flex align-items-center justify-content-center gap-3">
+            {% with current_page=cl.page_num %}
+              {% if current_page > 1 %}
+                <a href="?p={{ current_page|add:'-1' }}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Previous page' %}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              {% else %}
+                <button class="btn btn-sm btn-outline-secondary" disabled title="{% trans 'Previous page' %}">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+              {% endif %}
+              
+              <span class="px-3" style="min-width: 80px; text-align: center;">
+                <strong>{{ current_page }}</strong> / <strong>{{ cl.paginator.num_pages }}</strong>
+              </span>
+              
+              {% if current_page < cl.paginator.num_pages %}
+                <a href="?p={{ current_page|add:'1' }}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Next page' %}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              {% else %}
+                <button class="btn btn-sm btn-outline-secondary" disabled title="{% trans 'Next page' %}">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              {% endif %}
+            {% endwith %}
+          </nav>
+        </div>
+        {% endif %}
+
       {% else %}
         <div class="empty-state">
           <p>{% trans "No items to display." %}</p>
@@ -665,6 +747,17 @@
       button.addEventListener('click', function() {
         const viewType = this.getAttribute('data-view');
         
+        // Reset all checkboxes when switching views
+        const actionSelectCheckboxes = document.querySelectorAll('.action-select');
+        actionSelectCheckboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        
+        // Reset select all checkbox
+        if (actionToggle) {
+          actionToggle.checked = false;
+        }
+        
         // Update active button
         viewButtons.forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
@@ -679,26 +772,149 @@
           listView.classList.add('active');
           localStorage.setItem('adminViewType', 'list');
         }
+        
+        // Update counter display after view switch
+        updateCounter();
       });
     });
 
-    // Remember user's view preference
-    const savedView = localStorage.getItem('adminViewType') || 'grid';
+    // Remember user's view preference - set on load without clicking (to avoid re-trigger)
+    const savedView = localStorage.getItem('adminViewType') || 'list';
     const savedButton = document.querySelector(`[data-view="${savedView}"]`);
     if (savedButton) {
-      savedButton.click();
+      // Apply view without triggering click event
+      viewButtons.forEach(btn => btn.classList.remove('active'));
+      savedButton.classList.add('active');
+      if (savedView === 'grid') {
+        gridView.classList.add('active');
+        listView.classList.remove('active');
+      } else {
+        gridView.classList.remove('active');
+        listView.classList.add('active');
+      }
     }
 
-    // Select all functionality
+    // Selection counter and checkbox functionality
     const actionToggle = document.getElementById('action-toggle');
-    if (actionToggle) {
-      actionToggle.addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.action-select');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = this.checked;
+    const actionCounter = document.querySelector('.action-counter');
+    const selectAcrossField = document.querySelector('.select-across');
+    const changelistForm = document.getElementById('changelist-form');
+
+    function getVisibleCheckboxes() {
+      // Only get checkboxes from the currently active view
+      const isGridActive = gridView.classList.contains('active');
+      if (isGridActive) {
+        return Array.from(gridView.querySelectorAll('.action-select'));
+      } else {
+        return Array.from(listView.querySelectorAll('.action-select'));
+      }
+    }
+
+    function updateCounter() {
+      const checked = getVisibleCheckboxes().filter(cb => cb.checked).length;
+      if (actionCounter) {
+        if (checked > 0) {
+          actionCounter.textContent = `${checked} item${checked !== 1 ? 's' : ''} selected`;
+          actionCounter.style.display = 'block';
+        } else {
+          actionCounter.style.display = 'none';
+        }
+      }
+    }
+
+    function attachCheckboxListeners() {
+      const checkboxes = getVisibleCheckboxes();
+      checkboxes.forEach(checkbox => {
+        // Remove existing listeners by cloning
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      });
+      
+      // Re-attach listeners to current view checkboxes
+      const currentCheckboxes = getVisibleCheckboxes();
+      currentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateCounter();
+          // Update the "select all" checkbox state
+          if (actionToggle) {
+            const uncheckedCount = currentCheckboxes.filter(cb => !cb.checked).length;
+            actionToggle.checked = uncheckedCount === 0 && currentCheckboxes.length > 0;
+          }
         });
       });
     }
+
+    // Select all functionality
+    if (actionToggle) {
+      actionToggle.addEventListener('change', function() {
+        const checkboxes = getVisibleCheckboxes();
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateCounter();
+      });
+    }
+
+    // Attach listeners when view changes
+    const originalViewClick = viewButtons[0].onclick;
+    viewButtons.forEach(button => {
+      const originalHandler = button.onclick;
+      button.addEventListener('click', function() {
+        // Reset checkboxes on view switch
+        const allCheckboxes = document.querySelectorAll('.action-select');
+        allCheckboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        if (actionToggle) {
+          actionToggle.checked = false;
+        }
+        
+        // Reset grid select-all checkbox
+        const gridSelectAll = document.querySelector('.grid-select-all');
+        if (gridSelectAll) {
+          gridSelectAll.checked = false;
+        }
+        
+        setTimeout(() => {
+          attachCheckboxListeners();
+          attachGridSelectAllListener();
+          updateCounter();
+        }, 0);
+      });
+    });
+
+    // Grid view select-all functionality
+    function attachGridSelectAllListener() {
+      const gridSelectAll = document.querySelector('.grid-select-all');
+      if (gridSelectAll && gridView.classList.contains('active')) {
+        gridSelectAll.addEventListener('change', function() {
+          const checkboxes = getVisibleCheckboxes();
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+          updateCounter();
+        });
+      }
+    }
+
+    // Initialize checkbox listeners
+    attachCheckboxListeners();
+    attachGridSelectAllListener();
+
+    // Form submission: ensure select_across is set correctly
+    if (changelistForm) {
+      changelistForm.addEventListener('submit', function(e) {
+        const selectedCheckboxes = getVisibleCheckboxes().filter(cb => cb.checked);
+        if (selectedCheckboxes.length === 0) {
+          e.preventDefault();
+          alert('Please select at least one item.');
+          return false;
+        }
+      });
+    }
+
+    // Initialize counter display
+    updateCounter();
   });
 </script>
 

@@ -41,6 +41,16 @@ class PaletteAdminSite(AdminSite):
     site_header = PALETTE_SETTINGS.get('site_header', "Palette Admin")
     site_title = PALETTE_SETTINGS.get('site_title', "Palette Admin")
     index_title = PALETTE_SETTINGS.get('index_title', "Palette Admin")
+    delete_selected_confirmation_template = "admin/delete_confirmation.html"
+    delete_confirmation_template = "admin/delete_confirmation.html"
+    
+    
+    def register(self, model_or_iterable, admin_class=None, **options):
+        from .admin import PaletteModelAdmin
+        if admin_class is None:
+            admin_class = PaletteModelAdmin
+        return super().register(model_or_iterable, admin_class, **options)
+
 
     def get_urls(self):
         custom_urls = [
@@ -225,7 +235,6 @@ class PaletteAdminSite(AdminSite):
         context['user'] = request.user
         return TemplateResponse(request, "admin/profile.html", context)
     
-
 
 
 # Some other config
