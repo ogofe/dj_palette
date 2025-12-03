@@ -3,23 +3,47 @@
 
 
 {% block content %}
-<div class="container mt-4">
-    <h1>User Profile</h1>
+<div class="container col-lg-7 mt-4">
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
             <p class="card-text">
-                <strong>Email:</strong> {{ user.email }}<br>
-                <strong>Last Login:</strong> {{ user.last_login|date:"Y-m-d H:i" }}<br>
-                <strong>Is Active:</strong> {{ user.is_active|yesno:"Yes,No" }}<br>
-                <strong>Is Staff:</strong> {{ user.is_staff|yesno:"Yes,No" }}<br>
-                <strong>Is Superuser:</strong> {{ user.is_superuser|yesno:"Yes,No" }}<br>
+                <div class="d-flex align-items-center border rounded p-2 gap-2 mb-3">
+                    <h6 class="mb-0"> Name:</h6>
+                    {{ user.get_full_name }}
+                </div>
+                
+                <div class="d-flex align-items-center border rounded px-3 py-2 gap-1 mb-3">
+                    <h6 class="mb-0"> Email:</h6>
+                    {{ user.email }}
+                </div>
+
+                <div class="d-flex align-items-center border rounded px-3 py-2 gap-1 mb-3">
+                    <h6 class="mb-0"> Last Login:</h6>
+                    {{ user.last_login.date }} {{ user.last_login.time }}
+                </div>
+
+                <div class="d-flex align-items-center border rounded px-3 py-2 gap-1 mb-3">
+                    <h6 class="mb-0"> Is Active:</h6>
+                    {{ user.is_active|yesno:"Yes,No" }}
+                </div>
+
+                <div class="d-flex align-items-center border rounded px-3 py-2 gap-1 mb-3">
+                    <h6 class="mb-0"> Is Staff:</h6>
+                    {{ user.is_staff|yesno:"Yes,No" }}
+                </div>
+
+                <div class="d-flex align-items-center border rounded px-3 py-2 gap-1 mb-3">
+                    <h6 class="mb-0"> Is Superuser:</h6>
+                    {{ user.is_superuser|yesno:"Yes,No" }}
+                </div>
+
             </p>
             <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-primary">Edit Profile</a>
-            <form method="post" action="{% url 'admin:auth_user_delete' user.pk %}" class="d-inline">
+            {% comment %} <form method="post" action="{% url 'admin:auth_user_delete' user.pk %}" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger">Delete User</button>
-            </form>
+            </form> {% endcomment %}
         </div>
     </div>
 </div>

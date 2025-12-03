@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n humanize admin_urls static palette %}
+{% load i18n humanize admin_urls admin_modify static palette palette_admin %}
 
 
 {% block extrastyle %}
@@ -195,16 +195,16 @@
 {% block content %}
   <div class="container-fluid">
     <div class="my-4">
-      {% if change %}<h6 class="alert small alert-secondary">Editing: <u> "{{ original }}" </u> </h6>{% endif %}
-      {% if add %}<h6 class="alert small alert-success">Create a new : {{ adminform.model_admin.opts.model_name|capfirst }}</h6>{% endif %}
+      {% if change %}<h6 class="alert small mx-0 alert-secondary">Editing: <u> "{{ original }}" </u> </h6>{% endif %}
+      {% if add %}<h6 class="alert small mx-0 alert-success">Create a new {{ adminform.model_admin.opts.model_name|capfirst }}</h6>{% endif %}
     </div>
 
     <form method="post" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
 
       {% if is_popup %}
-        <input type="hidden" name="_popup" value="1">
-        <script type="text/javascript">
+        <input type="hidden" name="{{ is_popup_var }}" value="1">
+        <script type="text/javascript" async>
           // Handle popup mode - notify parent window when item is created
           window.addEventListener('beforeunload', function() {
             if (window.opener && window.opener.dismissAddRelatedModal) {
@@ -220,15 +220,13 @@
       {% endif %}
 
       {% if to_field %}
-        <input type="hidden" name="_to_field" value="{{ to_field }}">
+        <input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">
       {% endif %}
 
       <input type="hidden" name="_save" value="true" />
 
       {% if add %}
         <input type="hidden" name="_saveasnew" value="true">
-      {% elif change %}
-        <input type="hidden" name="id" value="{{ object.id }}">
       {% endif %}
       
       {% if save_and_continue %}
@@ -251,6 +249,7 @@
               <div class="mb-3 row">
               {% for line in fieldset %}
                 {% for field in line %}
+                    <!-- DEBUG: field.label={{ field.label }}, widget_type={{ field|widget_type }}, is_multiple_select={{ field|is_multiple_select }} -->
                     <div class="
                     {% if field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
                     col-12 
@@ -263,30 +262,39 @@
                         {% if field.field.is_required %}<span class="text-danger">*</span>{% endif %}
                       </label>
 
-                      {% comment %} {% if field|widget_type == 'relatedfieldwidgetwrapper' and not field|is_multiple_select %}
-                          <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 form-control">
+                      {% if field|widget_type == 'relatedfieldwidgetwrapper' and not field|is_multiple_select %}
+                          <select name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="select2 form-control">
                             {% for option in field.field.field.choices %}
-                              <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
+                              <option value="{{ option.0 }}" {% if option.0 in field.field.value %}selected{% endif %}>
                                 {{ option.1 }}
                               </option>
                             {% endfor %}
                           </select>
+                      
                       {% elif field|widget_type == 'relatedfieldwidgetwrapper' and field|is_multiple_select %}
-                        <div class="related-widget-wrapper" data-model-ref="{{ field.field.rel.model_name }}" data-field-id="{{ field.id_for_label }}">
-                          <select multiple name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="select2 multiple form-control">
+                        <div class="related-widget-wrapper" data-model-ref="{{ field.field.rel.model_name }}" data-field-id="{{ field.field.id_for_label }}">
+                          <select multiple name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="select2 multiple form-control">
                             {% for option in field.field.field.choices %}
-                              <option value="{{ option.0 }}" {% if option.0 in field.value %}selected{% endif %}>
+                              <option value="{{ option.0 }}" {% if option.0 in field.field.value %}selected{% endif %}>
                                 {{ option.1 }}
                               </option>
                             {% endfor %}
                           </select>
-                          {% if field.field.rel %}
-                            <button type="button" class="related-widget-wrapper-link add-related-modal" data-model="{{ field.field.rel.model_name }}" data-field-id="{{ field.id_for_label }}" title="Add another {{ field.field.rel.model_name|title }}">
+                        
+                          {% if field.field.field.widget.rel and field.field.field.widget.can_add_related %}
+                            <button
+                             type="button"
+                             class="related-widget-wrapper-link add-related-modal"
+                             data-model="{{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"verbose_name" }}"
+                             data-field-id="{{ field.field.id_for_label }}"
+                             data-app-label="{{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"app_label" }}"
+                             title="Add another {{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"verbose_name" }}"
+                            >
                               <i class="bi bi-plus-circle"></i> Add
                             </button>
                           {% endif %}
-                        </div> {% endcomment %}
-                      {% if field|widget_type == "adminfile" %}
+                        </div>
+                      {% elif field|widget_type == "adminfile" %}
                         <div class="dj-palette-file-upload-zone" id="dj-palette-dropzone-{{ field.field.id_for_label }}">
                           <div class="dj-palette-file-upload-content">
                             <i class="bi bi-cloud-arrow-up"></i>
@@ -322,7 +330,7 @@
                       {% elif field|widget_type == "adminsplitdatetime" %}
                         {% if field.field.value %}
                           {% with datetime_val=field.field.value %}
-                            <input type="datetime-local" name="{{ field.field.html_name }}" value="{{ datetime_val|date:'Y-m-d\\TH:i' }}" class="form-control" id="{{ field.field.id_for_label }}">
+                            <input type="datetime-local" name="{{ field.field.html_name }}" value="{{ datetime_val|date:'Y-m-d\\TH:i'|default:datetime_val }}" class="form-control" id="{{ field.field.id_for_label }}">
                           {% endwith %}
                         {% else %}
                           <input type="datetime-local" name="{{ field.field.html_name }}" class="form-control" id="{{ field.field.id_for_label }}">
@@ -330,13 +338,14 @@
                       {% elif field|widget_type == "adminurlfield" %}
                         <input type="url" name="{{ field.field.html_name }}" value="{{ field.field.value|default:'' }}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
                       {% elif field|widget_type == "admintextinput" and field.field.name == 'password' %}
-                        <input type="password" name="{{ field.field.html_name }}" disabled="true" value="{{ field.field.value|default:''}}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
+                        <input type="password" name="{{ field.field.html_name }}" value="{{ field.field.value|default:''}}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
                         <p class="small"> To change the password, use this "form" </p>
                       {% elif field|widget_type == "admintextinput" %}
                         <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% elif field|widget_type == "adminuuidinput" %}
                         <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% else %}
+                        <!-- FALLBACK: widget_type={{ field|widget_type }}, field_name={{ field.field.name }} -->
                         <div> {{ field.field  }} </div>
                       {% endif %}
 
@@ -360,15 +369,21 @@
       {% block submit_buttons_bottom %}
       <div class="d-flex gap-3 flex-wrap position-sticky sticky-bottom border-top py-3 px-4 mt-5" style="background-color: var(--card-bg); border-color: var(--card-border);">
         <button type="submit" class="btn btn-primary">
-          <i class="bi bi-download"></i> Save Changes
+          <i class="bi bi-download"></i> Save {% if change %} Changes {% endif %}
         </button>
+        {% if not is_popup %}
         <button type="submit" class="btn btn-secondary">
           <i class="bi bi-plus-circle"></i> Save and add another
         </button>
-        {% if change %}
-          <a href="{{ delete_url }}" class="btn btn-danger">
+        {% endif %}
+
+        {% if change and not is_popup %}
+          <form action="{{ delete_url }}" id="delete-form">
+            <input type="hidden" name="action" value="delete" />
+          </form>
+          <button form="delete-form" type="submit" class="btn btn-danger">
             <i class="bi bi-trash"></i> Delete
-          </a>
+          </button>
         {% endif %}
       </div>
       {% endblock %}
@@ -392,10 +407,27 @@
       </div>
     </div>
   </div>
+
+
+  
+{% block admin_change_form_document_ready %}
+    <script id="django-admin-form-add-constants"
+            src="{% static 'admin/js/change_form.js' %}"
+            {% if adminform and add %}
+                data-model-name="{{ opts.model_name }}"
+            {% endif %}
+            async>
+    </script>
+{% endblock %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
 {% endblock %}
 
 
 {% block extra_scripts %}
+  <script src="{% static 'js/popup_response.js' %}"></script>
   <script type="text/javascript">
     $(document).ready(function(){
         // Initialize Select2 with current values
@@ -412,28 +444,29 @@
           }
         });
         
-        // Get form and ensure values are synced before submission
+        // Sync Select2 changes to native select element in real-time
+        $('.select2').on('change', function() {
+          const $select = $(this);
+          const selectedValues = $select.val() || [];
+          
+          console.log(`Select2 changed for field ${this.name}:`, selectedValues);
+          
+          // Update the native select element's options
+          if (this.options && this.options.length > 0) {
+            Array.from(this.options).forEach(option => {
+              if (option) {
+                option.selected = selectedValues.includes(option.value);
+              }
+            });
+          }
+        });
+        
+        // Get form and log data before submission (for debugging)
         const form = document.querySelector('form');
         if (form) {
-          // Use native form submit event with capture phase
+          // Use capture phase to run early
           form.addEventListener('submit', function(e) {
-            console.log('Form submitting, syncing Select2 fields...');
-            
-            // For each Select2 field, ensure the underlying select element
-            // has the values that will be submitted
-            document.querySelectorAll('.select2').forEach(selectElement => {
-              const $select = $(selectElement);
-              
-              // Get the selected values from Select2
-              const selectedValues = $select.val() || [];
-              
-              console.log(`Field ${selectElement.name}: ${selectedValues}`);
-              
-              // Make sure the native select element has these values selected
-              Array.from(selectElement.options).forEach(option => {
-                option.selected = selectedValues.includes(option.value);
-              });
-            });
+            console.log('Form submitting...');
             
             // Log entire form data for debugging
             const formData = new FormData(form);
@@ -544,39 +577,123 @@
           document.querySelectorAll('.add-related-modal').forEach(btn => {
             btn.addEventListener('click', function(e) {
               e.preventDefault();
-              const modelName = this.dataset.model;
-              const fieldId = this.dataset.fieldId;
-              const addUrl = `/admin/core/${modelName}/add/?_to_field=id&_popup=1`;
-              
-              // Set iframe src and modal title
-              modalTitle.textContent = `Add New ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}`;
-              modalFrame.src = addUrl;
-              
-              // Store field ID for later use
-              modalFrame.dataset.fieldId = fieldId;
-              
-              // Show modal
-              modal.show();
+              try{
+                const modelName = this.dataset.model;
+                const fieldId = this.dataset.fieldId;
+                const appLabel = this.dataset.appLabel;
+                const addUrl = `http://localhost:8000/admin/${appLabel}/${modelName}/add/?_to_field=id&_popup=1`;
+                console.log("Found a relational model field:", modelName, "with dataset:", this.dataset);
+
+                window.modalFrame = modal;
+                
+                // Check if dark mode is enabled
+                const isDarkMode = document.body.classList.contains('dark-mode');
+
+                // Set up iframe load listener to detect successful submissions
+                let loadCount = 0;
+                const onIframeLoad = function() {
+                  loadCount++;
+                  // First load is the form itself, second load is after form submission
+                  if (loadCount > 1) {
+                    console.log('Form submitted, iframe reloaded - checking if save was successful');
+                    // Small delay to let popup_response.js handle the response
+                    setTimeout(() => {
+                      // If we're still in the modal, the save may have failed
+                      // If popup closed itself, it was successful
+                      try {
+                        const iframeDoc = modalFrame.contentDocument || modalFrame.contentWindow.document;
+                        const pageTitle = iframeDoc.title;
+                        console.log('Iframe title after reload:', pageTitle);
+                        modal.hide()
+                      } catch (e) {
+                        console.log('Cannot access iframe - likely closed successfully');
+                      }
+                    }, 300);
+                  }
+                };
+                modalFrame.addEventListener('load', onIframeLoad);
+                
+                // Set iframe src and modal title
+                modalTitle.textContent = `Add New ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}`;
+                
+                // Apply dark mode to iframe when it loads
+                modalFrame.onload = function() {
+                  if (isDarkMode) {
+                    try {
+                      const iframeDoc = modalFrame.contentDocument || modalFrame.contentWindow.document;
+                      iframeDoc.body.classList.add('dark-mode');
+                      console.log('Dark mode applied to iframe');
+                    } catch (e) {
+                      console.log('Could not apply dark mode to iframe:', e);
+                    }
+                  }
+                };
+                
+                modalFrame.src = addUrl;
+                
+                // Store field ID for later use
+                modalFrame.dataset.fieldId = fieldId;
+                
+                // Show modal
+                modal.show();
+              }catch(error){
+                console.log("Error laoding modal:", error)
+              }
             });
           });
           
           // Handle popup responses from iframe
           window.dismissAddRelatedModal = function(newId, newLabel) {
+            console.log('dismissAddRelatedModal called with:', { newId, newLabel });
+            
             const fieldId = modalFrame.dataset.fieldId;
+            if (!fieldId) {
+              console.warn('No fieldId in modalFrame dataset');
+              return;
+            }
+            
             const selectElement = document.getElementById(fieldId);
+            if (!selectElement) {
+              console.warn('Select element not found for fieldId:', fieldId);
+              return;
+            }
             
-            // Add new option to select
-            const newOption = document.createElement('option');
-            newOption.value = newId;
-            newOption.text = newLabel;
-            newOption.selected = true;
-            selectElement.appendChild(newOption);
+            // If no label provided, use the ID as fallback
+            const displayLabel = newLabel && newLabel.trim() ? newLabel : newId;
             
-            // Trigger select2 to refresh
-            $(selectElement).val($(selectElement).val()).trigger('change');
+            // Check if option already exists
+            let existingOption = Array.from(selectElement.options).find(opt => opt.value === newId);
             
-            // Close modal
-            modal.hide();
+            if (existingOption) {
+              // Update existing option
+              existingOption.text = displayLabel;
+              existingOption.selected = true;
+              console.log('Updated existing option:', { value: newId, text: displayLabel });
+            } else {
+              // Add new option to select
+              const newOption = document.createElement('option');
+              newOption.value = newId;
+              newOption.text = displayLabel;
+              newOption.selected = true;
+              selectElement.appendChild(newOption);
+              console.log('Added new option:', { value: newId, text: displayLabel });
+            }
+            
+            // Trigger select2 to refresh and sync
+            $(selectElement).val([...$(selectElement).val()]).trigger('change');
+            console.log('Select2 refreshed with new values:', $(selectElement).val());
+            
+            // Close modal - blur focused elements first to avoid aria-hidden warnings
+            if (modal) {
+              // Remove focus from any focused element in the modal
+              const focusedElement = addRelatedModal.querySelector(':focus');
+              if (focusedElement) {
+                focusedElement.blur();
+              }
+              modal.hide();
+            }
+            
+            console.log('Item added to select2 and modal closed');
           };
         }
       }

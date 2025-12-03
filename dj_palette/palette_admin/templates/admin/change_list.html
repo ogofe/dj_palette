@@ -128,6 +128,10 @@
     font-weight: 500;
   }
 
+  .select2-container{
+    flex: 1;
+  }
+
   .actions a:hover {
     text-decoration: underline;
   }
@@ -446,11 +450,11 @@
         <div class="col-sm-6 col-lg-7 my-1">
           <form id="searchbar" method="get" class="w-100">
             <div class="input-group">
-              <span class="input-group-text bg-light">
+              <span class="input-group-text">
                 <i class="bi bi-search text-dark"></i>
               </span>
               <input type="text" name="q" value="{{ cl.query }}" placeholder="{% trans 'Search' %}" class="form-control" aria-label="{% trans 'Search' %}">
-              <button type="submit" class="btn btn-light">{% trans 'Search' %}</button>
+              <button type="submit" class="btn btn-primary">{% trans 'Search' %}</button>
               {% if cl.query %}
                 <a href="{{ request.path }}" class="btn btn-light bi bi-x-circle"></a>
               {% endif %}
@@ -478,7 +482,7 @@
                         {% endif %}
                       {% endfor %}
                     </select>
-                    <button type="submit" class="btn btn-outline-secondary" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                    <button type="submit" class="btn btn-light" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
                       {% trans "Submit" %}
                     </button>
                   </div>
@@ -584,7 +588,7 @@
                       {% else %}
                         {% if field_name in cl.grid_display_links %}
                           <p class="mb-1">
-                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item}}"> {{ item|getattr:field_name|truncatewords:"7" }} </a>
+                            <strong>{{ field_name|humanize_name }}:</strong> <a href="{{item.pk}}/change/"> {{ item|getattr:field_name|truncatewords:"7" }} </a>
                           </p>
                         {% else %}
                           <p class="mb-1">

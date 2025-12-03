@@ -15,7 +15,7 @@
   </div>
 
   <div class="row mx-0 mb-4">
-    <div class="col-sm-6 col-md-5">
+    <div class="col-sm-6 col-md-5 mb-3">
       {% palette_ui file="palette/components/card.html" component="card" with title="Current Session"  onclick="window.alert('Total Users')" %}
         {% comment %} {% palette_override card_header %}{% endpalette_override card_header %} {% endcomment %}
         {% palette_override card_body %}
@@ -78,7 +78,7 @@
             <div class="card">
               <div class="card-header d-flex font-weight-bold justify-content-between align-items-center">
                 <h5> {{ model.name }} </h5>
-                <a href="{{ model.add_url }}" class="btn btn-sm btn-outline-info"> <i class="bi bi-plus"></i> Add </a>
+                <a href="{{ model.add_url }}" class="btn btn-sm btn-outline-secondary"> <i class="bi bi-plus"></i> Add </a>
               </div>
               
               <div class="card-body">

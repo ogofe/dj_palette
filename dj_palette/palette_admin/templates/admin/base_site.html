@@ -6,61 +6,64 @@
 {% endblock extrastyle %}
 
 {% block body %}
-<div class="body-content d-flex">
-  {% block sidebar %}
-  <div class="sidebar collapsed">
-    <div class="d-flex align-items-center justify-content-center gap-4 text-center mb-4 py-4">
-      {% if site_logo %}
-      <img src="{{ site_logo }}" alt="{{ site_header }} logo" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
-      {% elif site_icon %}
-      <i class="{{ site_icon }} fs-2"></i>
-      {% else %}
-      <i class="bi bi-grid-3x3-gap-fill"></i>
-      {% endif %}
-      <h5 class="text-center mb-0"> {{ site_header|default:"Palette"}} </h5>
+<div class="body-content d-flex {% if is_popup %} is-popup {% endif %}">
+  {% if not is_popup %}
+    {% block sidebar %}
+    <div class="sidebar collapsed">
+      <div class="d-flex align-items-center justify-content-center gap-4 text-center mb-4 py-4">
+        {% if site_logo %}
+        <img src="{{ site_logo }}" alt="{{ site_header }} logo" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
+        {% elif site_icon %}
+        <i class="{{ site_icon }} fs-2"></i>
+        {% else %}
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+        {% endif %}
+        <h5 class="text-center mb-0"> {{ site_header|default:"Palette"}} </h5>
+      </div>
+
+      <div class="nav flex-column mb-3 p-2">
+        <a href="{% url 'admin:index' %}" class="nav-link {% if request.path == '/admin/' %}active{% endif %}">
+          <i class="bi bi-house-door-fill me-2"></i> Dashboard
+        </a>
+      </div>
+
+      {% with app_list=available_apps %}
+        {% for app in app_list %}
+          <div>
+              <a href="{{ app.app_url }}" class="gap-2 text-decoration-none d-flex fw-bold bg-dark text-white p-2 m-0">
+                <i class="icon {{ app|app_icon_class }}"></i>
+                <span class="small"> {{ app.name }} </span>
+              </a>
+              <div class="nav flex-column mb-2 p-2 gap-3">
+              {% for model in app.models %}
+                  <div class="nav-item px-2 rounded-0 d-flex align-items-center justify-content-between">
+                      <a href="{{ model.admin_url }}" class="nav-link d-flex justify-content-between align-items-center {% if model.admin_url in request.path %}active{% endif %}">
+                      <span><i class="icon {{ model|model_icon_class:app.app_label}} me-2"></i>{{ model.name }}</span>
+                      {% if model.add_url %}
+                        <a href="{{ model.add_url }}" class="btn btn-sm btn-primary sidebar-add-btn"><i class="bi bi-plus-circle"></i>  Add</a>
+                      {% endif %}
+                      </a>
+                  </div>
+              {% endfor %}
+              </div>
+          </div>
+        {% endfor %}
+      {% endwith %}
     </div>
+    {% endblock sidebar %}
+  {% endif %}
 
-    <div class="nav flex-column mb-3 p-2">
-      <a href="{% url 'admin:index' %}" class="nav-link {% if request.path == '/admin/' %}active{% endif %}">
-        <i class="bi bi-house-door-fill me-2"></i> Dashboard
-      </a>
-    </div>
-
-    {% with app_list=available_apps %}
-      {% for app in app_list %}
-        <div>
-            <a href="{{ app.app_url }}" class="gap-2 text-decoration-none d-flex fw-bold bg-dark text-white p-2 m-0">
-              <i class="icon {{ app|app_icon_class }}"></i>
-              <span class="small"> {{ app.name }} </span>
-            </a>
-            <div class="nav flex-column mb-2 p-2 gap-3">
-            {% for model in app.models %}
-                <div class="nav-item px-2 rounded-0 d-flex align-items-center justify-content-between">
-                    <a href="{{ model.admin_url }}" class="nav-link d-flex justify-content-between align-items-center {% if model.admin_url in request.path %}active{% endif %}">
-                    <span><i class="icon {{ model|model_icon_class:app.app_label}} me-2"></i>{{ model.name }}</span>
-                    {% if model.add_url %}
-                      <a href="{{ model.add_url }}" class="btn btn-sm btn-primary sidebar-add-btn"><i class="bi bi-plus-circle"></i>  Add</a>
-                    {% endif %}
-                    </a>
-                </div>
-            {% endfor %}
-            </div>
-        </div>
-      {% endfor %}
-    {% endwith %}
-  </div>
-  {% endblock sidebar %}
-
-  <div class="main-content flex-grow-1">
+  <div class="{% if is_popup %} modal-body {% endif %} main-content  flex-grow-1">
     {% block topbar %}
     <div class="topbar">
       <div class="d-flex align-items-center gap-2">
         <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
           <i class="bi bi-list"></i>
         </button>
-        <h5 class="mb-0">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</h5>
+        <p class="mb-0 font-weight-bold">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</p>
       </div>
 
+      {% if not is_popup %}
       <div class="d-flex align-items-center gap-3">
         <!-- Dark Mode Toggle -->
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
@@ -78,33 +81,35 @@
           <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
             {% csrf_token %}
           </form>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="{% url 'admin:password_change' %}"><i class="bi bi-key"></i> Change Password</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><button type="submit" form="logout" class="dropdown-item" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
+          <ul class="dropdown-menu dropdown-menu-end py-0">
+            <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
+            <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:password_change' %}"><i class="bi bi-shield-lock"></i> Change Password</a></li>
+            <li><button type="submit" form="logout" class="dropdown-item p-2 px-4" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
           </ul>
         </div>
       </div>
+      {% endif %}
     </div>
     {% endblock topbar %}
 
-    {% block back_button %}
-    <div class="px-2 py-2">
-      {% if request.path != '/admin/' %}
-        <a href="{% back_button %}" class="btn btn-small btn-outline-secondary me-3" title="Back">
-          <i class="bi bi-arrow-left"></i> Back
-        </a>
-      {% endif %}
-    </div>
-    {% endblock back_button %}
-    
+    {% if not is_popup %}
+      {% block back_button %}
+      <div class="px-2 py-2">
+        {% if request.path != '/admin/' %}
+          <a href="{% back_button %}" class="btn btn-small btn-outline-secondary me-3" title="Back">
+            <i class="bi bi-arrow-left"></i> Back
+          </a>
+        {% endif %}
+      </div>
+      {% endblock back_button %}
+    {% endif %}
+
     <div class="d-block">
       {% if messages %}
         {% for msg in messages %}
           {% if msg.level_tag == 'success' %}
             <div class="alert alert-success alert-message alert-dismissible fade show" role="alert">
-              <div class="d-flex align-items-start gap-3">
+              <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-check-circle-fill alert-icon"></i>
                 <div class="flex-grow-1">{{ msg }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -112,7 +117,7 @@
             </div>
           {% elif msg.level_tag == 'error' %}
             <div class="alert alert-danger alert-message alert-dismissible fade show" role="alert">
-              <div class="d-flex align-items-start gap-3">
+              <div class="d-flex align-items-center  gap-3">
                 <i class="bi bi-exclamation-circle-fill alert-icon"></i>
                 <div class="flex-grow-1">{{ msg }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -120,7 +125,7 @@
             </div>
           {% elif msg.level_tag == 'warning' %}
             <div class="alert alert-warning alert-message alert-dismissible fade show" role="alert">
-              <div class="d-flex align-items-start gap-3">
+              <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
                 <div class="flex-grow-1">{{ msg }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -128,7 +133,7 @@
             </div>
           {% else %}
             <div class="alert alert-info alert-message alert-dismissible fade show" role="alert">
-              <div class="d-flex align-items-start gap-3">
+              <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-info-circle-fill alert-icon"></i>
                 <div class="flex-grow-1">{{ msg }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

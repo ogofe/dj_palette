@@ -104,12 +104,12 @@
     .object-list li {
       padding: 0.5rem;
       color: var(--bs-body-color);
-      border-bottom: 1px solid var(--card-border);
-      {% comment %} font-size: 0.95rem; {% endcomment %}
+      border-top: 1px solid var(--card-border);
     }
 
-    .object-list li:last-child {
-      border-bottom: none;
+    .object-list li:first-child {
+      border-top: none !important;
+      color: cornflowerblue;
     }
 
     .object-list li:before {
@@ -128,8 +128,9 @@
     .form-actions {
       display: flex;
       gap: 1rem;
-      justify-content: center;
+      justify-content: space-around;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     .form-actions button,
@@ -243,9 +244,8 @@
           </a>
         </div>
       {% else %}
-        <div class="delete-warning">
-          <strong>{% trans "Are you sure?" %}</strong>
-          <p>{% trans "This action cannot be undone. Please confirm that you want to delete the following object(s):" %}</p>
+        <div class="alert alert-danger mx-0 small p-2">
+          <p class="mb-0">{% trans "This action cannot be undone. Please confirm that you want to delete the following" %}  {% trans opts.verbose_name_plural %}: </p>
         </div>
 
         {% for deletable_object in deletable_objects %}
@@ -253,7 +253,7 @@
             {% if deletable_object %}
               <ul class="small">
                 {% for object in deletable_object %}
-                  <li class="">{{ forloop.counter }} - {{ object }}</li>
+                  <li class="">{{ forloop.counter }} - {{ object|truncatewords:8 }}</li>
                 {% endfor %}
               </ul>
             {% endif %}
@@ -269,11 +269,13 @@
           <input type="hidden" name="action" value="delete_selected">
 
           <div class="form-actions">
-            <button type="submit" class="btn-danger" name="delete-confirm">
+          
+            <button type="submit" class="btn-danger btn-sm" name="delete-confirm">
               <i class="bi bi-check-circle"></i> {% trans "Confirm Deletion" %}
             </button>
-            <a href="{{ back_url }}" class="btn-secondary">
-              <i class="bi bi-x-circle"></i> {% trans "Cancel" %}
+
+            <a href="{{ back_url }}" class="btn-secondary btn-sm">
+              <i class="bi bi-x-circle"></i> {% trans "No, Take me back!" %}
             </a>
           </div>
         </form>

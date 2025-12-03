@@ -17,6 +17,7 @@ from django.urls import NoReverseMatch, Resolver404, resolve, reverse, reverse_l
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.conf import settings
+from django.urls import reverse_lazy
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.views import (
     PasswordResetView,
@@ -58,9 +59,13 @@ class PaletteAdminSite(AdminSite):
             path('logout/', self.logout, name='logout'),
             path('password_change/', self.password_change, name='password_change'),
             path('password_change/done/', self.password_change_done, name='password_change_done'),
-            path('password-reset/', PasswordResetView.as_view(), name='password_reset'),
+            path('password-reset/', PasswordResetView.as_view(
+                success_url=reverse_lazy('palette_admin:password_reset_done')
+                ), name='password_reset'),
             path('password-reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
-            path('password-reset/confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(success_url='palette_admin:password_reset_done'), name='password_reset_confirm'),
+            path('password-reset/confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(
+                success_url=reverse_lazy('palette_admin:password_reset_complete')
+                ), name='password_reset_confirm'),
             path('password-reset/complete/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
             path('support_chat/', self.admin_view(self.support_chat_view), name='support_chat'),
             path('profile/', self.admin_view(self.profile_view), name='profile'),

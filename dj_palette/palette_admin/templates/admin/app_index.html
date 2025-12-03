@@ -4,7 +4,8 @@
 {% block content %}
 {% with app=app_list|first %}
   <div class="container py-4">
-  <h4> Showing all Data Tables in `{{ app.app_label|capfirst }}`. </h4>
+    <h4 class="alert small alert-info mx-0 mb-3"> Showing all Data Tables in `{{ app.app_label|capfirst }}`. </h4>
+    
     <div class="row mx-0">
       {% for model in app.models %}
         <div class="col-sm-6 col-lg-4 mb-4">

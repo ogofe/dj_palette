@@ -399,15 +399,13 @@ class PaletteModelAdmin(admin.ModelAdmin):
             request, obj, change=not add, fields=flatten_fieldsets(fieldsets)
         )
         if request.method == "POST":
-            files = request.FILES
-            post_data = request.POST
-            # raise Exception("Hello Form Submission!")
             form = ModelForm(request.POST, request.FILES, instance=obj)
             formsets, inline_instances = self._create_formsets(
                 request,
                 form.instance,
                 change=not add,
             )
+            # raise Exception(f"Form Submission Debug - children: {children}")
             form_validated = form.is_valid()
             if form_validated:
                 new_object = self.save_form(request, form, change=not add)
