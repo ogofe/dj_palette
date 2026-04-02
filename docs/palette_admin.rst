@@ -123,6 +123,7 @@ Beautiful form for creating and editing instances.
 - Sticky action footer bar
 - Save, Delete, and Save and Add Another buttons
 - Support for inline related objects
+- Password field rendered as read-only hash with a change-password link
 
 **File Upload:**
 
@@ -134,6 +135,79 @@ The file input includes:
 - File icon for other file types
 - Responsive grid preview
 - Works with any file type
+
+**Related Object Modal Popup:**
+
+ForeignKey and ManyToManyField selects that allow adding related objects show an
+**Add** button beside the field. Clicking it opens a Bootstrap modal containing an
+iframe loaded with the related model's add form — the user never leaves the current page.
+
+How it works:
+
+1. The **Add** button carries ``data-model-name``, ``data-app-label``, and
+   ``data-field-id`` attributes identifying the target model and the parent select field.
+2. The iframe loads ``/<admin-prefix>/<app>/<model>/add/?_to_field=id&_popup=1``.
+3. When the form inside the iframe is saved successfully, Django injects a
+   ``#django-admin-popup-response-constants`` element with the new object's PK and
+   label as JSON.
+4. The iframe's load event detects this element, reads the response, and calls
+   ``window.parent.dismissAddRelatedModal(pk, label)``.
+5. ``dismissAddRelatedModal`` appends the new option to the parent Select2 field,
+   marks it as selected, and closes the modal.
+6. If the iframe form has validation errors (no response constants found), the modal
+   stays open so the user can correct them.
+
+**Dark mode** is automatically propagated from the parent page into the iframe on load.
+
+The modal is only shown for fields where ``can_add_related`` is ``True`` on the widget
+(Django's default for ForeignKey/M2M fields where the user has ``add`` permission).
+
+``popup_response.js``
+^^^^^^^^^^^^^^^^^^^^^
+
+``static/js/popup_response.js`` is loaded on every admin page and manages all
+popup/iframe communication. It is compatible with both Palette Admin's iframe modal
+and Django's traditional new-window popup system.
+
+**Responsibilities:**
+
+- Detects context: iframe vs. traditional popup window (``window.opener``).
+- Reads ``?_popup=1``, ``?_to_field``, and ``?_popup_id`` URL parameters.
+- Reads the saved object's PK and label from Django's
+  ``#django-admin-popup-response-constants`` element.
+- Routes the response to the correct handler:
+
+  - **Iframe context** → calls ``window.parent.dismissAddRelatedModal(pk, label)``
+    or falls back to ``postMessage``.
+  - **Traditional popup** → calls ``window.opener.dismissAddRelatedObjectPopup``
+    or ``window.opener.dismissChangeRelatedObjectPopup`` (Django-compatible).
+
+- Supports **nested popups**: forwards ``postMessage`` responses up the chain.
+- Exposes ``window.PopupResponse`` for external use:
+
+.. code-block:: javascript
+
+   window.PopupResponse.state;       // Current popup context state
+   window.PopupResponse.getPopupValue();  // PK of the object being edited
+   window.PopupResponse.getPopupLabel();  // Display label for the object
+   window.PopupResponse.send(pk, label);  // Manually send a popup response
+
+**Global functions registered by** ``popup_response.js``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Function
+     - Description
+   * - ``dismissAddRelatedModal(pk, label)``
+     - Called by child iframes to add the new object to the parent Select2 field.
+   * - ``dismissPopup(pk, obj)``
+     - Generic fallback, forwards response up the window chain.
+   * - ``dismissAddRelatedObjectPopup(win, pk, str)``
+     - Django admin compatibility shim (traditional add popup).
+   * - ``dismissChangeRelatedObjectPopup(win, pk, str, newId)``
+     - Django admin compatibility shim (traditional change popup).
 
 **Customization:**
 
@@ -235,6 +309,7 @@ Sidebar Features
 - Active state highlighting
 - Collapsible on mobile
 - Smooth toggle animation
+- Custom links section (see ``custom_links`` in :ref:`palette-admin-settings`)
 
 **Toggle:**
 
@@ -247,6 +322,30 @@ On mobile devices, the sidebar collapses automatically and can be toggled.
 **Desktop:**
 
 The sidebar is always visible and can be toggled with localStorage persistence.
+
+**Custom Links:**
+
+Arbitrary links can be injected into the sidebar below the Dashboard entry via
+``PALETTE_ADMIN_SETTINGS['custom_links']``. Each link accepts:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Key
+     - Description
+   * - ``label``
+     - Display text for the link.
+   * - ``url``
+     - Named URL pattern (e.g. ``'admin:support_chat'``) **or** a raw path/URL.
+       Named patterns are resolved with ``reverse()`` at request time; unresolvable
+       values fall back to the raw string.
+   * - ``left_icon``
+     - *(optional)* Bootstrap Icon class rendered before the label (e.g. ``'bi bi-headset'``).
+   * - ``right_icon``
+     - *(optional)* Bootstrap Icon class rendered after the label (e.g. ``'bi bi-arrow-right'``).
+
+The active state is applied automatically when ``resolved_url`` matches ``request.path``.
 
 Customizing the Admin Interface
 ================================
@@ -333,46 +432,169 @@ All static files are included and bundled:
 
 All files are automatically available after ``collectstatic``.
 
+.. _palette-admin-settings:
+
 Configuration
 =============
 
-**Site Header**
-
-Customize the admin site header:
-
-.. code-block:: python
-
-   # In your admin configuration
-   admin.site.site_header = "My Custom Admin"
-
-**Site Title**
-
-Customize the browser tab title:
+All Palette Admin settings are controlled through a single ``PALETTE_ADMIN_SETTINGS``
+dictionary in your project's ``settings.py``.
 
 .. code-block:: python
 
-   admin.site.site_title = "My Project Admin"
+   # settings.py
+   PALETTE_ADMIN_SETTINGS = {
+       'site_header':  'My Project',
+       'site_title':   'My Project Admin',
+       'site_icon':    'bi bi-grid',
+       'index_title':  'Dashboard',
+       'app_icons':    { ... },
+       'model_icons':  { ... },
+       'hidden_apps':  [ ... ],
+       'hidden_models': { ... },
+       'custom_links': [ ... ],
+   }
 
-**Index Title**
+All keys are optional. Omitted keys fall back to built-in defaults.
 
-Customize the dashboard title:
+.. list-table:: Top-level keys
+   :header-rows: 1
+   :widths: 25 15 60
+
+   * - Key
+     - Type
+     - Description
+   * - ``site_header``
+     - ``str``
+     - Displayed in the sidebar header and browser tab.
+   * - ``site_title``
+     - ``str``
+     - HTML ``<title>`` for admin pages.
+   * - ``site_icon``
+     - ``str``
+     - Bootstrap Icon class used when no ``site_logo`` is set (e.g. ``'bi bi-palette'``).
+   * - ``index_title``
+     - ``str``
+     - Heading shown on the dashboard page.
+   * - ``app_icons``
+     - ``dict``
+     - Maps ``app_label`` → Bootstrap Icon class. See `App & Model Icons`_.
+   * - ``model_icons``
+     - ``dict``
+     - Maps ``model_name`` → Bootstrap Icon class. See `App & Model Icons`_.
+   * - ``hidden_apps``
+     - ``list``
+     - App labels to exclude from the sidebar. See `Hiding Apps and Models`_.
+   * - ``hidden_models``
+     - ``dict``
+     - Per-app lists of model names to exclude from the sidebar. See `Hiding Apps and Models`_.
+   * - ``custom_links``
+     - ``list``
+     - Extra links rendered in the sidebar below the Dashboard entry. See `Sidebar Features`_.
+
+App & Model Icons
+-----------------
+
+Palette Admin ships with a set of built-in icons for common app and model names.
+You can override any of them or add new ones via ``PALETTE_ADMIN_SETTINGS``.
+
+**Per-app icons** — keyed by Django's ``app_label``:
 
 .. code-block:: python
 
-   admin.site.index_title = "Dashboard"
+   PALETTE_ADMIN_SETTINGS = {
+       'app_icons': {
+           'blog':  'bi bi-journal-richtext',
+           'shop':  'bi bi-bag',
+           'myapp': 'bi bi-star',
+       },
+   }
 
-**Enable/Disable Apps**
-
-Control which apps are shown in the sidebar by registering model admins:
+**Per-model icons** — keyed by Django's ``model_name`` (lowercase, singular):
 
 .. code-block:: python
 
-   # In your admin.py
-   admin.site.register(MyModel, MyModelAdmin)
+   PALETTE_ADMIN_SETTINGS = {
+       'model_icons': {
+           'post':    'bi bi-file-text',
+           'product': 'bi bi-box',
+           'user':    'bi bi-person',
+       },
+   }
+
+**App-specific model icon override** — use ``app_label.model_name`` as the key to
+override an icon for a model in a particular app only (takes priority over the plain
+``model_name`` key):
+
+.. code-block:: python
+
+   PALETTE_ADMIN_SETTINGS = {
+       'model_icons': {
+           'user':      'bi bi-person',           # default for all User models
+           'auth.user': 'bi bi-shield-person',    # overrides for auth.User specifically
+       },
+   }
+
+User-supplied icons are **merged** with the built-in defaults, so you only need to
+specify the ones you want to change. Built-in defaults include icons for common
+app labels (``auth``, ``blog``, ``shop``, ``accounts``, etc.) and model names
+(``user``, ``group``).
+
+Hiding Apps and Models
+----------------------
+
+Remove entire apps from the sidebar:
+
+.. code-block:: python
+
+   PALETTE_ADMIN_SETTINGS = {
+       'hidden_apps': ['sessions', 'contenttypes', 'admin'],
+   }
+
+Remove specific models from an app while keeping the rest of the app visible:
+
+.. code-block:: python
+
+   PALETTE_ADMIN_SETTINGS = {
+       'hidden_models': {
+           'auth':  ['permission'],          # hide Permission; keep User & Group
+           'blog':  ['tag', 'draft'],
+       },
+   }
+
+Keys in ``hidden_models`` are ``app_label`` strings; values are lists of
+``model_name`` strings (lowercase, singular — same as Django's ``Model._meta.model_name``).
+
+Filtering happens at the ``get_app_list`` level, so hidden items are excluded
+everywhere the app list is used (sidebar, dashboard, breadcrumbs).
+
+Custom Sidebar Links
+--------------------
+
+.. code-block:: python
+
+   PALETTE_ADMIN_SETTINGS = {
+       'custom_links': [
+           {
+               'label': 'Support',
+               'url':   'admin:support_chat',      # named URL pattern
+               'left_icon': 'bi bi-headset',
+           },
+           {
+               'label': 'Documentation',
+               'url':   'https://docs.example.com',  # absolute URL also works
+               'left_icon':  'bi bi-book',
+               'right_icon': 'bi bi-box-arrow-up-right',
+           },
+       ],
+   }
+
+Named URL patterns are resolved with ``reverse()`` at request time. If the name
+cannot be resolved (e.g. the URL doesn't exist), the raw value is used as-is.
 
 **Custom Admin Site**
 
-You can create a custom admin site:
+You can subclass ``PaletteAdminSite`` for further programmatic customisation:
 
 .. code-block:: python
 

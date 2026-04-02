@@ -194,10 +194,14 @@
 
 {% block content %}
   <div class="container-fluid">
+
+    {% if not is_popup %}
     <div class="my-4">
       {% if change %}<h6 class="alert small mx-0 alert-secondary">Editing: <u> "{{ original }}" </u> </h6>{% endif %}
       {% if add %}<h6 class="alert small mx-0 alert-success">Create a new {{ adminform.model_admin.opts.model_name|capfirst }}</h6>{% endif %}
     </div>
+    {% endif %}
+
 
     <form method="post" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
@@ -286,6 +290,7 @@
                              type="button"
                              class="related-widget-wrapper-link add-related-modal"
                              data-model="{{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"verbose_name" }}"
+                             data-model-name="{{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"model_name" }}"
                              data-field-id="{{ field.field.id_for_label }}"
                              data-app-label="{{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"app_label" }}"
                              title="Add another {{ field.field.field.widget.rel.model|getattr:"_meta"|getattr:"verbose_name" }}"
@@ -337,9 +342,16 @@
                         {% endif %}
                       {% elif field|widget_type == "adminurlfield" %}
                         <input type="url" name="{{ field.field.html_name }}" value="{{ field.field.value|default:'' }}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
-                      {% elif field|widget_type == "admintextinput" and field.field.name == 'password' %}
-                        <input type="password" name="{{ field.field.html_name }}" value="{{ field.field.value|default:''}}" class="form-control disabled password" id="{{ field.field.id_for_label }}">
-                        <p class="small"> To change the password, use this "form" </p>
+                      {% elif field|widget_type == "readonlypasswordhashwidget" or field|widget_type == "admintextinput" and field.field.name == 'password' %}
+                        {% url 'palette_admin:auth_user_password_change' original.pk as password_change_url %}
+                        {% if not password_change_url %}{% url 'admin:auth_user_password_change' original.pk as password_change_url %}{% endif %}
+                        <div class="border rounded px-3 py-2" style="font-family: monospace; font-size: 0.78rem; overflow: clip; text-overflow: ellipsis; color: var(--text-muted); background-color: var(--bs-body-bg);">
+                          {{ field.field.value|default:'—' }}
+                        </div>
+                        <small class="form-text d-block mt-1">
+                          Passwords are stored as hashes and cannot be viewed or edited here.
+                          {% if password_change_url %}<a href="{{ password_change_url }}">Change password &rarr;</a>{% endif %}
+                        </small>
                       {% elif field|widget_type == "admintextinput" %}
                         <input name="{{ field.field.html_name }}" id="{{ field.field.id_for_label }}" class="form-control" rows="4" value="{{ field.field.value|default:'' }}" />
                       {% elif field|widget_type == "adminuuidinput" %}
@@ -367,7 +379,7 @@
       </div>
 
       {% block submit_buttons_bottom %}
-      <div class="d-flex gap-3 flex-wrap position-sticky sticky-bottom border-top py-3 px-4 mt-5" style="background-color: var(--card-bg); border-color: var(--card-border);">
+      <div class="d-flex gap-3 flex-wrap position-sticky sticky-bottom border-top py-3 px-4" style="background-color: var(--card-bg); border-color: var(--card-border);">
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-download"></i> Save {% if change %} Changes {% endif %}
         </button>
@@ -399,7 +411,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <iframe id="relatedItemFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+          <iframe id="relatedItemFrame" style="width: 100%; border: none;"></iframe>
         </div>
         <div class="modal-footer border-top">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -573,51 +585,76 @@
           const modal = new bootstrap.Modal(addRelatedModal);
           const modalFrame = document.getElementById('relatedItemFrame');
           const modalTitle = document.getElementById('addRelatedModalLabel');
-          
+
+          // Keep a reference to the current load handler so we can remove it before adding a new one
+          let currentLoadHandler = null;
+
           document.querySelectorAll('.add-related-modal').forEach(btn => {
             btn.addEventListener('click', function(e) {
               e.preventDefault();
               try{
-                const modelName = this.dataset.model;
+                const modelVerboseName = this.dataset.model;
+                const modelName = this.dataset.modelName;  // actual Django model_name (URL-safe)
                 const fieldId = this.dataset.fieldId;
                 const appLabel = this.dataset.appLabel;
-                const addUrl = `http://localhost:8000/admin/${appLabel}/${modelName}/add/?_to_field=id&_popup=1`;
+                const adminBase = "{% url 'admin:index' %}";
+                const addUrl = `${window.location.origin}${adminBase}${appLabel}/${modelName}/add/?_to_field=id&_popup=1`;
                 console.log("Found a relational model field:", modelName, "with dataset:", this.dataset);
 
                 window.modalFrame = modal;
-                
-                // Check if dark mode is enabled
-                const isDarkMode = document.body.classList.contains('dark-mode');
 
-                // Set up iframe load listener to detect successful submissions
+                // Remove previous load handler before attaching a new one
+                if (currentLoadHandler) {
+                  modalFrame.removeEventListener('load', currentLoadHandler);
+                  currentLoadHandler = null;
+                }
+
+                // Set up iframe load listener to detect successful submissions and resize to content
                 let loadCount = 0;
-                const onIframeLoad = function() {
+                currentLoadHandler = function() {
                   loadCount++;
-                  // First load is the form itself, second load is after form submission
-                  if (loadCount > 1) {
-                    console.log('Form submitted, iframe reloaded - checking if save was successful');
-                    // Small delay to let popup_response.js handle the response
-                    setTimeout(() => {
-                      // If we're still in the modal, the save may have failed
-                      // If popup closed itself, it was successful
-                      try {
-                        const iframeDoc = modalFrame.contentDocument || modalFrame.contentWindow.document;
-                        const pageTitle = iframeDoc.title;
-                        console.log('Iframe title after reload:', pageTitle);
-                        modal.hide()
-                      } catch (e) {
-                        console.log('Cannot access iframe - likely closed successfully');
+                  // Wait for the iframe's content to fully render before measuring/acting
+                  setTimeout(() => {
+                    try {
+                      const iframeDoc = modalFrame.contentDocument || modalFrame.contentWindow.document;
+
+                      // Resize iframe to match content height on every load (form load or re-render)
+                      const contentHeight = iframeDoc.documentElement.scrollHeight || iframeDoc.body.scrollHeight;
+                      modalFrame.style.height = Math.max(300, contentHeight) + 'px';
+
+                      // Subsequent loads = form was submitted; check for Django's popup response data
+                      if (loadCount > 1) {
+                        console.log('Iframe reloaded after form submission - reading popup response');
+                        // Django injects popup response data into #django-admin-popup-response-constants
+                        // when the form is saved with ?_popup=1
+                        const constEl = iframeDoc.getElementById('django-admin-popup-response-constants');
+                        if (constEl && constEl.dataset.popupResponse) {
+                          const data = JSON.parse(constEl.dataset.popupResponse);
+                          const pk = data.value || data.pk || data.new_value;
+                          const label = data.obj || String(pk);
+                          if (pk) {
+                            console.log('Got popup response from iframe:', data);
+                            window.dismissAddRelatedModal(String(pk), label);
+                            return; // dismissAddRelatedModal handles closing the modal
+                          }
+                        }
+                        // No response constants = validation errors; keep modal open so user can fix them
+                        console.log('No popup response constants found - keeping modal open for errors');
                       }
-                    }, 300);
-                  }
+                    } catch (e) {
+                      console.log('Cannot access iframe content:', e);
+                      modalFrame.style.height = '500px'; // cross-origin or other error fallback
+                    }
+                  }, 300);
                 };
-                modalFrame.addEventListener('load', onIframeLoad);
-                
+                modalFrame.addEventListener('load', currentLoadHandler);
+
                 // Set iframe src and modal title
-                modalTitle.textContent = `Add New ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}`;
-                
+                modalTitle.textContent = `Add New ${modelVerboseName.charAt(0).toUpperCase() + modelVerboseName.slice(1)}`;
+
                 // Apply dark mode to iframe when it loads
                 modalFrame.onload = function() {
+                  const isDarkMode = document.body.classList.contains('dark-mode');
                   if (isDarkMode) {
                     try {
                       const iframeDoc = modalFrame.contentDocument || modalFrame.contentWindow.document;
@@ -628,16 +665,16 @@
                     }
                   }
                 };
-                
+
                 modalFrame.src = addUrl;
-                
-                // Store field ID for later use
+
+                // Store field ID for later use when dismissAddRelatedModal fires
                 modalFrame.dataset.fieldId = fieldId;
-                
+
                 // Show modal
                 modal.show();
               }catch(error){
-                console.log("Error laoding modal:", error)
+                console.log("Error loading modal:", error)
               }
             });
           });

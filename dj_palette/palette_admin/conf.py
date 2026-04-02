@@ -17,17 +17,17 @@ BASE_APP_ICONS = {
 
 
 BASE_MODEL_ICONS = {
-    'groups': 'bi bi-people-fill',
-    'users': 'bi bi-person-fill',
+    'group': 'bi bi-people-fill',
+    'user': 'bi bi-person-fill',
 }
 
 
-global PALETTE_SETTINGS
+global PALETTE_ADMIN_SETTINGS
 
 try:
-    PALETTE_SETTINGS:dict = settings.PALETTE_ADMIN_SETTINGS
+    PALETTE_ADMIN_SETTINGS:dict = settings.PALETTE_ADMIN_SETTINGS
 except Exception as e:
-    PALETTE_SETTINGS = dict()
+    PALETTE_ADMIN_SETTINGS = dict()
 
 SETTINGS = {
   'site_header': 'Dj Palette',
@@ -35,28 +35,34 @@ SETTINGS = {
   'site_icon': 'bi bi-palette',
   'index_title': 'Dashboard',
   'custom_urls': [],
-  'custom_links': [
-        {
-            'label': "Support",
-            'url': 'admin:support_chat', # a name from a valid url pattern,
-            'left_icon': 'bi bi-support-chat', # or right_icon for positioning of the icon
-        }
-    ]
+  'custom_links': []
 }
 
 SETTINGS.update({
-    'app_icons': {**BASE_APP_ICONS, **PALETTE_SETTINGS.get('app_icons', dict())},
-    'model_icons': {**BASE_MODEL_ICONS, **PALETTE_SETTINGS.get('model_icons', dict())},
+    'app_icons': {**BASE_APP_ICONS, **PALETTE_ADMIN_SETTINGS.get('app_icons', dict())},
+    'model_icons': {**BASE_MODEL_ICONS, **PALETTE_ADMIN_SETTINGS.get('model_icons', dict())},
+    'hidden_apps': PALETTE_ADMIN_SETTINGS.get('hidden_apps', []),
+    'hidden_models': PALETTE_ADMIN_SETTINGS.get('hidden_models', {}),
 })
 
 
 
 def get_base_app_icon(app_label):
-    _settings = SETTINGS
-    return SETTINGS['app_icons'][app_label]
+    return SETTINGS['app_icons'].get(app_label, 'bi bi-grid')
 
 def get_base_model_icon(model_name, app_label=None):
-    _settings = SETTINGS
-    return SETTINGS['model_icons'].get(model_name, '')
+    icons = SETTINGS['model_icons']
+    if app_label:
+        specific = f'{app_label}.{model_name}'
+        if specific in icons:
+            return icons[specific]
+    return icons.get(model_name, 'bi bi-table')
+
+def is_app_hidden(app_label):
+    return app_label in SETTINGS.get('hidden_apps', [])
+
+def is_model_hidden(app_label, model_name):
+    hidden = SETTINGS.get('hidden_models', {})
+    return model_name in hidden.get(app_label, [])
 
 

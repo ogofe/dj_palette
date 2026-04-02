@@ -728,7 +728,7 @@ def render_ui(component_name, props_str=""):
 
 @register.filter
 def widget_type(field):
-    print("Widget for field:", field.field.widget_type)
+    # print("Widget for field:", field.field.widget_type)
     return field.field.widget_type
 
 

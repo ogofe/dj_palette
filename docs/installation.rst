@@ -41,7 +41,12 @@ In your Django project's ``settings.py``, add ``dj_palette`` and ``dj_palette.pa
        # ... your other apps
    ]
 
-The order matters - ``dj_palette`` should come before ``django.contrib.admin``.
+The order matters - ``dj_palette`` should come before ``django.contrib.admin``, only if you want to use the Django Palette Admin UI.
+
+.. note::
+   Also set ``X_FRAME_OPTIONS = 'SAMEORIGIN'`` when using ``dj_palette.palette_admin``. This is necessary because Django Palette Admin uses modal instead of the normal popup windows when adding related fields.
+
+
 
 Step 3: Configure URLs (Optional)
 ==================================

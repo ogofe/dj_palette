@@ -9,17 +9,16 @@ def app_icon_class(app, icon=''):
     label = app['app_label']
     if label:
         return get_base_app_icon(label)
-    return icon
+    return icon or 'bi bi-grid'
 
 
 @register.filter
-def model_icon_class(model, icon=''):
+def model_icon_class(model, app_label=''):
     from dj_palette.palette_admin.conf import get_base_model_icon
-
-    label:str = model['name'].lower()
-    if label:
-        return get_base_model_icon(label)
-    return icon
+    model_name = model.get('model_name') or model.get('object_name', '').lower()
+    if model_name:
+        return get_base_model_icon(model_name, app_label=app_label or None)
+    return 'bi bi-table'
 
 
 @register.filter

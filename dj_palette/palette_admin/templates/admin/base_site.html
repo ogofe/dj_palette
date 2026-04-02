@@ -49,48 +49,63 @@
           </div>
         {% endfor %}
       {% endwith %}
+
+      
+      {% if custom_links %}
+      <div class="nav flex-column mb-3 p-2">
+        {% for link in custom_links %}
+        <a href="{{ link.resolved_url }}" class="nav-link d-flex align-items-center justify-content-between {% if link.resolved_url == request.path %}active{% endif %}">
+          <span>
+            {% if link.left_icon %}<i class="{{ link.left_icon }} me-2"></i>{% endif %}
+            {{ link.label }}
+          </span>
+          {% if link.right_icon %}<i class="{{ link.right_icon }}"></i>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
     {% endblock sidebar %}
   {% endif %}
 
-  <div class="{% if is_popup %} modal-body {% endif %} main-content  flex-grow-1">
-    {% block topbar %}
-    <div class="topbar">
-      <div class="d-flex align-items-center gap-2">
-        <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-          <i class="bi bi-list"></i>
-        </button>
-        <p class="mb-0 font-weight-bold">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</p>
-      </div>
+  <div class="{% if is_popup %} {% endif %} main-content  flex-grow-1">
+    {% if not is_popup %}
+      {% block topbar %}
+      <div class="topbar">
+        <div class="d-flex align-items-center gap-2">
+          <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+            <i class="bi bi-list"></i>
+          </button>
+          <p class="mb-0 font-weight-bold">{% block page_title %} {{ title|default:"Dashboard" }} {% endblock page_title %}</p>
+        </div>
 
-      {% if not is_popup %}
-      <div class="d-flex align-items-center gap-3">
-        <!-- Dark Mode Toggle -->
-        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-          <div class="theme-toggle-icon">
-            <i class="bi bi-brightness-high"></i>
-          </div>
-        </button>
+        <div class="d-flex align-items-center gap-3">
+          <!-- Dark Mode Toggle -->
+          <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <div class="theme-toggle-icon">
+              <i class="bi bi-brightness-high"></i>
+            </div>
+          </button>
 
-        <!-- User Chip -->
-        <div class="dropdown chip">
-          <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="User">
-            <span>{{ user.get_full_name|default:user.username }}</span>
+          <!-- User Chip -->
+          <div class="dropdown chip">
+            <div class="account-chip dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="User">
+              <span>{{ user.get_full_name|default:user.username }}</span>
+            </div>
+            <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
+              {% csrf_token %}
+            </form>
+            <ul class="dropdown-menu dropdown-menu-end py-0">
+              <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
+              <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:password_change' %}"><i class="bi bi-shield-lock"></i> Change Password</a></li>
+              <li><button type="submit" form="logout" class="dropdown-item p-2 px-4" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
+            </ul>
           </div>
-          <form id="logout" method="post" action="{% url 'admin:logout' %}" class="d-none">
-            {% csrf_token %}
-          </form>
-          <ul class="dropdown-menu dropdown-menu-end py-0">
-            <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:profile' %}"><i class="bi bi-person"></i> View Profile</a></li>
-            <li><a class="dropdown-item p-2 border-bottom px-4" href="{% url 'admin:password_change' %}"><i class="bi bi-shield-lock"></i> Change Password</a></li>
-            <li><button type="submit" form="logout" class="dropdown-item p-2 px-4" href="{% url 'admin:logout' %}"><i class="bi bi-box-arrow-right"></i> Logout </a></li>
-          </ul>
         </div>
       </div>
-      {% endif %}
-    </div>
-    {% endblock topbar %}
+      {% endblock topbar %}
+    {% endif %}
 
     {% if not is_popup %}
       {% block back_button %}

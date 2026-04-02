@@ -37,8 +37,13 @@ PALETTE_SETTINGS = getattr(settings, 'PALETTE_ADMIN_SETTINGS', SETTINGS)
 
 
 class PaletteAdminSite(AdminSite):
-    # make the following variables dynamic from settings, e.g
 
+    @classmethod
+    def __new__(cls, *args, **kwargs):
+        print("Creating Admin Site Instance")
+        return super().__new__(cls)
+
+    # make the following variables dynamic from settings, e.g
     site_header = PALETTE_SETTINGS.get('site_header', "Palette Admin")
     site_title = PALETTE_SETTINGS.get('site_title', "Palette Admin")
     index_title = PALETTE_SETTINGS.get('index_title', "Palette Admin")
@@ -133,15 +138,31 @@ class PaletteAdminSite(AdminSite):
 
 
     def get_app_list(self, request):
+        from .conf import is_app_hidden, is_model_hidden
         app_dict = self._build_app_dict(request)
 
-        # Inject model manager as model.objects for template use
+        hidden_apps = PALETTE_SETTINGS.get('hidden_apps', [])
+        hidden_models = PALETTE_SETTINGS.get('hidden_models', {})
+
+        filtered = {}
         for app_label, app in app_dict.items():
+            if app_label in hidden_apps:
+                continue
+
+            visible_models = []
             for model_dict in app['models']:
                 model_class = self._registry[model_dict['model']].model
-                model_dict['objects'] = model_class._default_manager  # or .objects
+                model_name = model_class._meta.model_name
+                if model_name in hidden_models.get(app_label, []):
+                    continue
+                model_dict['objects'] = model_class._default_manager
+                model_dict['model_name'] = model_name
+                visible_models.append(model_dict)
 
-        app_list = sorted(app_dict.values(), key=lambda x: x['name'].lower())
+            app['models'] = visible_models
+            filtered[app_label] = app
+
+        app_list = sorted(filtered.values(), key=lambda x: x['name'].lower())
         for app in app_list:
             app['models'].sort(key=lambda x: x['name'])
         return app_list
@@ -149,7 +170,17 @@ class PaletteAdminSite(AdminSite):
 
     def each_context(self, request):
         context = super().each_context(request)
-        context['custom_links'] = PALETTE_SETTINGS.get('custom_links', [])
+
+        resolved_links = []
+        for link in PALETTE_SETTINGS.get('custom_links', []):
+            link = dict(link)
+            url = link.get('url', '#')
+            try:
+                link['resolved_url'] = reverse(url, current_app=self.name)
+            except NoReverseMatch:
+                link['resolved_url'] = url
+            resolved_links.append(link)
+        context['custom_links'] = resolved_links
 
         for key, value in PALETTE_SETTINGS.items():
             if key not in context:

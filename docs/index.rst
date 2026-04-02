@@ -53,9 +53,9 @@ Table of Contents
 Quick Links
 ===========
 
-- `GitHub Repository <https://github.com/ogofe/django-palette>`_
+- `GitHub Repository <https://github.com/ogofe/dj_palette>`_
 - `PyPI Package <https://pypi.org/project/dj-palette/>`_
-- `Issue Tracker <https://github.com/ogofe/django-palette/issues>`_
+- `Issue Tracker <https://github.com/ogofe/dj_palette/issues>`_
 
 Features
 ========
@@ -97,8 +97,8 @@ For detailed setup instructions, see :doc:`installation`.
 Support
 =======
 
-- **Documentation**: https://django-palette.readthedocs.io
-- **GitHub Issues**: https://github.com/ogofe/django-palette/issues
+- **Documentation**: https://dj-palette.readthedocs.io
+- **GitHub Issues**: https://github.com/ogofe/dj_palette/issues
 - **Email**: 7thogofe@gmail.com
 
 License
