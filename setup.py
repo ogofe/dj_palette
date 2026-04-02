@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="dj-palette",
-    version="1.0.2.0",
+    version="1.0.3",
     description="A Django admin system with tools for building custom admin interfaces and reusable components",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
